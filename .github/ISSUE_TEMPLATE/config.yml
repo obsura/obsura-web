@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability report
+    url: mailto:security@obsura.dev
+    about: Please report security issues privately via email.
+  - name: Contribution guide
+    url: https://github.com/obsura/obsura-web/blob/main/CONTRIBUTING.md
+    about: Read contribution workflow and standards before opening PRs.
