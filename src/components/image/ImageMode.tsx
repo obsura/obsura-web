@@ -9,18 +9,21 @@ import { Button, Card, Badge } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
+import { api } from "../../lib/api";
 import { useImageRedaction } from "../../hooks/use-image-redaction";
 import { useLocalStorage } from "../../hooks/use-local-storage";
+import JSZip from "jszip";
 
 export const ImageMode = () => {
-  const [files, setFiles] = React.useState<{ id: string; file: File; previewUrl: string; }[]>([]);
+  const [files, setFiles] = React.useState<{ id: string; file: File; previewUrl: string; resultImageUrl?: string }[]>([]);
   const [activeIndex, setActiveIndex] = React.useState(0);
+  const [isBatchProcessing, setIsBatchProcessing] = React.useState(false);
 
   const activeFileObj = files[activeIndex];
   const file = activeFileObj?.file || null;
   const previewUrl = activeFileObj?.previewUrl || null;
   const [showAdvanced, setShowAdvanced] = useLocalStorage("obsura_img_showAdvanced", false);
-  const [sliderPos, setSliderPos] = useState(50);
+  const [sliderPos, setSliderPos] = useState(0); // 0 shows the fully redacted image by default
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [autoProcess, setAutoProcess] = useLocalStorage("obsura_img_autoProcess", true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +37,10 @@ export const ImageMode = () => {
   const { analysis, output, isLoading, error, analyzeImage, redactImage, reset: resetHook } = useImageRedaction();
 
   const resultImageUrl = React.useMemo(() => {
-    if (!output) return undefined;
+    // If we have an active file and it already has a saved result, use it preferentially when there's no live hook output.
+    const activeSavedUrl = activeFileObj?.resultImageUrl;
+    
+    if (!output) return activeSavedUrl;
     if (output.media_url) {
       try {
         return new URL(output.media_url, env.API_BASE_URL).href;
@@ -42,8 +48,19 @@ export const ImageMode = () => {
         return output.media_url;
       }
     }
-    return output.output_image_url;
-  }, [output]);
+    return output.output_image_url || activeSavedUrl;
+  }, [output, activeFileObj]);
+
+  // Sync back resultImageUrl into the files array so we can download/share all
+  React.useEffect(() => {
+    if (output && resultImageUrl && activeFileObj && activeFileObj.resultImageUrl !== resultImageUrl) {
+      setFiles(prev => {
+        const next = [...prev];
+        next[activeIndex] = { ...next[activeIndex], resultImageUrl };
+        return next;
+      });
+    }
+  }, [output, resultImageUrl, activeIndex]);
 
   const handleShare = async (platform?: string) => {
     if (!resultImageUrl) return;
@@ -80,6 +97,100 @@ export const ImageMode = () => {
     }
   };
 
+  const getOrProcessAll = async () => {
+    const manifest: ImageTransformManifest = {
+      detect_text: detectText,
+      detect_faces: detectFaces,
+      default_transformation: {
+        mode: transformMode,
+        overlay_color: "#111111",
+        overlay_label: "REDACTED",
+        blur_radius: Number(blurRadius),
+      },
+    };
+
+    setIsBatchProcessing(true);
+    const updatedFiles = await Promise.all(
+      files.map(async (f) => {
+        if (f.resultImageUrl) return f;
+        try {
+          const res = await api.transformImage(f.file, manifest);
+          let url = res.output_image_url;
+          if (res.media_url) {
+            try {
+              url = new URL(res.media_url, env.API_BASE_URL).href;
+            } catch {
+              url = res.media_url;
+            }
+          }
+          return { ...f, resultImageUrl: url };
+        } catch (err) {
+          console.error("Failed to process", f.file.name, err);
+          return f;
+        }
+      })
+    );
+    setFiles(updatedFiles);
+    setIsBatchProcessing(false);
+    return updatedFiles;
+  };
+
+  const handleDownloadAll = async () => {
+    if (files.length === 0) return;
+    const processedFiles = await getOrProcessAll();
+    const zip = new JSZip();
+
+    for (let i = 0; i < processedFiles.length; i++) {
+        const f = processedFiles[i];
+        if (f.resultImageUrl) {
+            try {
+                const res = await fetch(f.resultImageUrl);
+                const blob = await res.blob();
+                zip.file(`redacted_${i + 1}_${f.file.name}`, blob);
+            } catch (err) {
+                console.error("Failed to fetch blob for zip", err);
+            }
+        }
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+    const downloadUrl = URL.createObjectURL(content);
+    downloadImageFile(downloadUrl, "obsura_redacted_images.zip");
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const handleShareAllWhatsApp = async () => {
+    if (files.length === 0) return;
+    const processedFiles = await getOrProcessAll();
+    
+    const filesToShare: File[] = [];
+    for (let i = 0; i < processedFiles.length; i++) {
+        const f = processedFiles[i];
+        if (f.resultImageUrl) {
+            try {
+                const res = await fetch(f.resultImageUrl);
+                const blob = await res.blob();
+                filesToShare.push(new File([blob], `redacted_${i + 1}_${f.file.name}`, { type: blob.type }));
+            } catch (err) {
+                console.error("Failed to fetch blob for share", err);
+            }
+        }
+    }
+
+    if (filesToShare.length > 0 && navigator.share && navigator.canShare && navigator.canShare({ files: filesToShare })) {
+        try {
+            await navigator.share({
+                title: 'Redacted Images',
+                text: 'Check out my securely redacted images from Obsura.',
+                files: filesToShare
+            });
+        } catch (err) {
+            if ((err as Error).name !== 'AbortError') console.error("Share all failed:", err);
+        }
+    } else {
+        alert("Your system doesn't support sharing multiple files directly to apps like WhatsApp.");
+    }
+  };
   const handleAnalyze = React.useCallback(() => {
     if (!file) return;
     const manifest: ImageAnalyzeManifest = {
@@ -164,10 +275,7 @@ export const ImageMode = () => {
         canvas.toBlob((blob) => {
           if (blob) {
             const capturedFile = new File([blob], "screenshot.png", { type: "image/png" });
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setFile(capturedFile);
-            setPreviewUrl(URL.createObjectURL(capturedFile));
-            resetHook();
+            handleFilesAdded([capturedFile]);
           }
         }, "image/png");
       }
@@ -183,36 +291,38 @@ export const ImageMode = () => {
       const items = e.clipboardData?.items;
       if (!items) return;
       
+      const pastedFiles: File[] = [];
       for (const item of items) {
         if (item.type.startsWith("image/")) {
           const pastedFile = item.getAsFile();
-          if (pastedFile) {
-            if (previewUrl) URL.revokeObjectURL(previewUrl);
-            setFile(pastedFile);
-            setPreviewUrl(URL.createObjectURL(pastedFile));
-            resetHook();
-            break;
-          }
+          if (pastedFile) pastedFiles.push(pastedFile);
         }
       }
+      if (pastedFiles.length > 0) handleFilesAdded(pastedFiles);
     };
 
     window.addEventListener("paste", handlePaste);
     return () => window.removeEventListener("paste", handlePaste);
-  }, [previewUrl, resetHook]);
+  }, [handleFilesAdded]);
 
   const handleReset = () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setFile(null);
-    setPreviewUrl(null);
+    files.forEach(f => URL.revokeObjectURL(f.previewUrl));
+    setFiles([]);
+    setActiveIndex(0);
     resetHook();
   };
 
+  // Keep a ref to the latest files to avoid stale closures on unmount
+  const filesRef = React.useRef(files);
+  React.useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
+
   React.useEffect(() => {
     return () => {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      filesRef.current.forEach(f => URL.revokeObjectURL(f.previewUrl));
     };
-  }, [previewUrl]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -227,10 +337,16 @@ export const ImageMode = () => {
                 Capture
               </Button>
               {file && (
-                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} aria-label="Replace image">
-                  <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                  Replace
-                </Button>
+                <>
+                  <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} aria-label="Add more images" title="Add more images">
+                    <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    Add More
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleReset} aria-label="Clear all images" className="text-red-500 hover:text-red-600 hover:bg-red-50" title="Clear all">
+                    <Trash2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                    Clear All
+                  </Button>
+                </>
               )}
             </div>
           </div>
@@ -249,6 +365,7 @@ export const ImageMode = () => {
               ref={fileInputRef}
               className="sr-only"
               accept="image/*"
+              multiple
               onChange={handleFileChange}
               aria-label="Upload an image"
             />
@@ -271,6 +388,20 @@ export const ImageMode = () => {
               </div>
             )}
           </Card>
+          {files.length > 1 && (
+            <div className="flex gap-2 mt-2 overflow-x-auto pb-2 custom-scrollbar">
+              {files.map((f, i) => (
+                <button
+                  key={f.id}
+                  onClick={() => { setActiveIndex(i); resetHook(); }}
+                  className={`relative w-16 h-16 flex-shrink-0 rounded-md overflow-hidden border-2 transition-all ${i === activeIndex ? "border-indigo-500 shadow-sm" : "border-transparent opacity-60 hover:opacity-100"}`}
+                >
+                  <img src={f.previewUrl} alt="thumbnail" className="w-full h-full object-cover" />
+                  <div className="absolute bottom-0 right-0 bg-black/50 text-white text-[9px] px-1 rounded-tl-sm">{i + 1}</div>
+                </button>
+              ))}
+            </div>
+          )}
           <p className="text-[11px] text-stone-400 pl-1" aria-hidden="true">
             Images are processed securely. Results are not stored.
           </p>
@@ -285,18 +416,23 @@ export const ImageMode = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={!output}
+                  disabled={(!output && !activeFileObj?.resultImageUrl) || isBatchProcessing}
                   onClick={() => setShowShareMenu(!showShareMenu)}
                   aria-label="Share image"
                 >
                   <Share2 className="w-4 h-4 mr-0 sm:mr-1.5" aria-hidden="true" />
                   <span className="hidden sm:inline">Share</span>
                 </Button>
-                {showShareMenu && output && (
-                  <div className="absolute top-full right-0 mt-1 w-48 bg-white border border-stone-200 shadow-xl rounded-md flex flex-col p-1 z-50">
-                    <button onClick={() => { handleShare('whatsapp'); setShowShareMenu(false); }} className="flex items-center gap-2 px-3 py-2 hover:bg-stone-50 text-sm w-full text-left rounded-sm transition-colors">
-                      <MessageCircle className="w-4 h-4 text-emerald-500" /> WhatsApp
+                {showShareMenu && (output || activeFileObj?.resultImageUrl) && (
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-stone-200 shadow-xl rounded-md flex flex-col p-1 z-50">
+                    <button onClick={() => { handleShare('whatsapp'); setShowShareMenu(false); }} className="flex items-center gap-2 px-3 py-2 hover:bg-stone-50 text-sm w-full text-left rounded-sm transition-colors text-stone-700">
+                      <MessageCircle className="w-4 h-4 text-emerald-500" /> WhatsApp (Current)
                     </button>
+                    {files.length > 1 && (
+                      <button onClick={() => { handleShareAllWhatsApp(); setShowShareMenu(false); }} className="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 text-sm w-full text-left rounded-sm transition-colors text-emerald-700 font-medium bg-emerald-50/50">
+                        <MessageCircle className="w-4 h-4" /> WhatsApp All ({files.length})
+                      </button>
+                    )}
                     <button onClick={() => { handleShare('email'); setShowShareMenu(false); }} className="flex items-center gap-2 px-3 py-2 hover:bg-stone-50 text-sm w-full text-left rounded-sm transition-colors">
                       <Mail className="w-4 h-4 text-stone-500" /> Email
                     </button>
@@ -314,13 +450,33 @@ export const ImageMode = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                disabled={!output}
-                onClick={() => output && resultImageUrl && downloadImageFile(resultImageUrl, "redacted_image.png")}
+                disabled={(!output && !activeFileObj?.resultImageUrl) || isBatchProcessing}
+                onClick={() => (output || activeFileObj?.resultImageUrl) && resultImageUrl && downloadImageFile(resultImageUrl, "redacted_image.png")}
                 aria-label="Download redacted image"
+                title="Download current"
               >
-                <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                Download
+                <Download className="w-4 h-4 sm:mr-1.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
+              {files.length > 1 && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  disabled={isBatchProcessing}
+                  onClick={handleDownloadAll}
+                  aria-label="Download all as ZIP"
+                  title={`Download all ${files.length} images compressed`}
+                >
+                  {isBatchProcessing ? (
+                    <RefreshCw className="w-4 h-4 sm:mr-1.5 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <Download className="w-4 h-4 sm:mr-1.5" aria-hidden="true" />
+                  )}
+                  <span className="hidden sm:inline">
+                    {isBatchProcessing ? "Processing..." : "ZIP All"}
+                  </span>
+                </Button>
+              )}
             </div>
           </div>
           <Card 
