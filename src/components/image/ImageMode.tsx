@@ -4,26 +4,76 @@
  */
 
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle } from "lucide-react";
+import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor } from "lucide-react";
 import { Button, Card, Badge } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
+import { env } from "../../lib/env";
 import { useImageRedaction } from "../../hooks/use-image-redaction";
+import { useLocalStorage } from "../../hooks/use-local-storage";
 
 export const ImageMode = () => {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showOriginal, setShowOriginal] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage("obsura_img_showAdvanced", false);
+  const [sliderPosition, setSliderPosition] = useState(50);
+  const [autoProcess, setAutoProcess] = useLocalStorage("obsura_img_autoProcess", true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Advanced Options State
-  const [detectText, setDetectText] = useState(true);
-  const [detectFaces, setDetectFaces] = useState(false);
-  const [transformMode, setTransformMode] = useState<any>("mask");
-  const [blurRadius, setBlurRadius] = useState(20);
+  const [detectText, setDetectText] = useLocalStorage("obsura_img_detectText", true);
+  const [detectFaces, setDetectFaces] = useLocalStorage("obsura_img_detectFaces", false);
+  const [transformMode, setTransformMode] = useLocalStorage<any>("obsura_img_transformMode", "mask");
+  const [blurRadius, setBlurRadius] = useLocalStorage("obsura_img_blurRadius", 20);
 
   const { analysis, output, isLoading, error, analyzeImage, redactImage, reset: resetHook } = useImageRedaction();
+
+  const resultImageUrl = React.useMemo(() => {
+    if (!output) return undefined;
+    if (output.media_url) {
+      try {
+        return new URL(output.media_url, env.API_BASE_URL).href;
+      } catch {
+        return output.media_url;
+      }
+    }
+    return output.output_image_url;
+  }, [output]);
+
+  const handleAnalyze = React.useCallback(() => {
+    if (!file) return;
+    const manifest: ImageAnalyzeManifest = {
+      detect_text: detectText,
+      detect_faces: detectFaces,
+      apply_builtins: true,
+    };
+    analyzeImage(file, manifest);
+  }, [file, detectText, detectFaces, analyzeImage]);
+
+  const handleRedact = React.useCallback(() => {
+    if (!file) return;
+    const manifest: ImageTransformManifest = {
+      detect_text: detectText,
+      detect_faces: detectFaces,
+      default_transformation: {
+        mode: transformMode,
+        overlay_color: "#111111",
+        overlay_label: "REDACTED",
+        blur_radius: Number(blurRadius),
+      },
+    };
+    redactImage(file, manifest);
+  }, [file, detectText, detectFaces, transformMode, blurRadius, redactImage]);
+
+  // Auto-process effect
+  React.useEffect(() => {
+    if (autoProcess && file) {
+      const handler = setTimeout(() => {
+        handleRedact();
+      }, 500);
+      return () => clearTimeout(handler);
+    }
+  }, [file, autoProcess, handleRedact]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -46,30 +96,58 @@ export const ImageMode = () => {
     }
   };
 
-  const handleAnalyze = () => {
-    if (!file) return;
-    const manifest: ImageAnalyzeManifest = {
-      detect_text: detectText,
-      detect_faces: detectFaces,
-      apply_builtins: true,
-    };
-    analyzeImage(file, manifest);
+  const handleScreenCapture = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+      const video = document.createElement("video");
+      video.srcObject = stream;
+      await video.play();
+
+      const canvas = document.createElement("canvas");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const capturedFile = new File([blob], "screenshot.png", { type: "image/png" });
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setFile(capturedFile);
+            setPreviewUrl(URL.createObjectURL(capturedFile));
+            resetHook();
+          }
+        }, "image/png");
+      }
+      
+      stream.getTracks().forEach((track) => track.stop());
+    } catch (err) {
+      console.error("Screen capture failed:", err);
+    }
   };
 
-  const handleRedact = () => {
-    if (!file) return;
-    const manifest: ImageTransformManifest = {
-      detect_text: detectText,
-      detect_faces: detectFaces,
-      default_transformation: {
-        mode: transformMode,
-        overlay_color: "#111111",
-        overlay_label: "REDACTED",
-        blur_radius: Number(blurRadius),
-      },
+  React.useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          const pastedFile = item.getAsFile();
+          if (pastedFile) {
+            if (previewUrl) URL.revokeObjectURL(previewUrl);
+            setFile(pastedFile);
+            setPreviewUrl(URL.createObjectURL(pastedFile));
+            resetHook();
+            break;
+          }
+        }
+      }
     };
-    redactImage(file, manifest);
-  };
+
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, [previewUrl, resetHook]);
 
   const handleReset = () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
@@ -91,12 +169,18 @@ export const ImageMode = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-stone-900" id="original-image-label">Original image</h3>
-            {file && (
-              <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} aria-label="Replace image">
-                <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden="true" />
-                Replace
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={handleScreenCapture} aria-label="Capture screen">
+                <Monitor className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                Capture
               </Button>
-            )}
+              {file && (
+                <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} aria-label="Replace image">
+                  <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden="true" />
+                  Replace
+                </Button>
+              )}
+            </div>
           </div>
           <Card
             className={`relative h-[360px] flex flex-col items-center justify-center transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 ${
@@ -129,8 +213,8 @@ export const ImageMode = () => {
                   <Upload className="w-8 h-8 text-indigo-500" aria-hidden="true" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-stone-600">Drag & drop or click to browse</p>
-                  <p className="text-xs mt-1 text-stone-400">Supports PNG, JPG, WebP up to 10MB</p>
+                    <p className="text-sm font-medium text-stone-600">Drag & drop, click, or Ctrl+V to paste</p>
+                    <p className="text-xs mt-1 text-stone-400">Supports PNG, JPG, WebP up to 10MB or Screen Capture</p>
                 </div>
               </div>
             )}
@@ -159,7 +243,7 @@ export const ImageMode = () => {
                 variant="ghost"
                 size="sm"
                 disabled={!output}
-                onClick={() => output && downloadImageFile(output.output_image_url, "redacted_image.png")}
+                onClick={() => output && resultImageUrl && downloadImageFile(resultImageUrl, "redacted_image.png")}
                 aria-label="Download redacted image"
               >
                 <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
@@ -184,7 +268,7 @@ export const ImageMode = () => {
               </div>
             ) : output ? (
               <img
-                src={showOriginal ? previewUrl! : output.output_image_url}
+                src={showOriginal ? previewUrl! : resultImageUrl}
                 alt="Redacted"
                 className="max-w-full max-h-full object-contain p-4"
                 referrerPolicy="no-referrer"
@@ -251,7 +335,16 @@ export const ImageMode = () => {
           </Button>
         </div>
 
-        <div className="flex items-center justify-center sm:justify-end w-full sm:w-auto mt-4 sm:mt-0">
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto mt-4 sm:mt-0 gap-6">
+          <label className="flex items-center gap-2 cursor-pointer group">
+            <input
+              type="checkbox"
+              checked={autoProcess}
+              onChange={(e) => setAutoProcess(e.target.checked)}
+              className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-1 transition-all"
+            />
+            <span className="text-xs font-medium text-stone-500 group-hover:text-stone-700 transition-colors">Auto-redact on upload</span>
+          </label>
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
             className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 px-1"

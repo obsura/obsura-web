@@ -9,19 +9,20 @@ import { Button, Card, Badge } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
+import { useLocalStorage } from "../../hooks/use-local-storage";
 
 export const TextMode = () => {
   const [input, setInput] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useLocalStorage("obsura_text_showAdvanced", false);
   const [copySuccess, setCopySuccess] = useState(false);
-  const [redactOnInput, setRedactOnInput] = useState(false);
+  const [redactOnInput, setRedactOnInput] = useLocalStorage("obsura_text_redactOnInput", true);
 
   // Advanced Options State
-  const [applyBuiltins, setApplyBuiltins] = useState(true);
-  const [persistJob, setPersistJob] = useState(false);
-  const [transformationMode, setTransformationMode] = useState<any>("semantic");
-  const [exactValues, setExactValues] = useState("");
-  const [placeholderLabel, setPlaceholderLabel] = useState("SENSITIVE_VALUE");
+  const [applyBuiltins, setApplyBuiltins] = useLocalStorage("obsura_text_applyBuiltins", true);
+  const [persistJob, setPersistJob] = useLocalStorage("obsura_text_persistJob", false);
+  const [transformationMode, setTransformationMode] = useLocalStorage<any>("obsura_text_transformationMode", "semantic");
+  const [exactValues, setExactValues] = useLocalStorage("obsura_text_exactValues", "");
+  const [placeholderLabel, setPlaceholderLabel] = useLocalStorage("obsura_text_placeholderLabel", "SENSITIVE_VALUE");
 
   const { output, isLoading, error, redactText, reset } = useTextRedaction();
 

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from "react";
 import { Header } from "../components/layout/Header";
 import { TextMode } from "../components/text/TextMode";
 import { ImageMode } from "../components/image/ImageMode";
@@ -11,9 +10,10 @@ import { RedactionMode } from "../lib/types";
 import { cn } from "../lib/utils";
 import { Type, Image as ImageIcon, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useLocalStorage } from "../hooks/use-local-storage";
 
 export default function App() {
-  const [mode, setMode] = useState<RedactionMode>("text");
+  const [mode, setMode] = useLocalStorage<RedactionMode>("obsura_active_mode", "text");
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
