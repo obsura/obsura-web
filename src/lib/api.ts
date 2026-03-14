@@ -14,7 +14,7 @@ import {
   ImageTransformManifest,
   ImageTransformResponse,
 } from "./types";
-import { env } from "./env";
+import { env, joinUrl } from "./env";
 import { handleApiError } from "./errors";
 
 // Helper function to centralize frontend fetch logic and CORS/Header configs
@@ -34,7 +34,7 @@ async function apiFetch<T>(
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(`${env.API_BASE_URL}${endpoint}`, {
+  const res = await fetch(joinUrl(env.API_BASE_URL, endpoint), {
     mode: "cors",
     ...options,
     headers,
