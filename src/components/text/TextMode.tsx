@@ -82,46 +82,48 @@ export const TextMode = () => {
         {/* Input Column */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900">Original text</h3>
+            <h3 className="text-sm font-semibold text-stone-900" id="original-text-label">Original text</h3>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm" onClick={handlePaste} title="Paste from clipboard">
-                <ClipboardPaste className="w-4 h-4 mr-1.5" />
+              <Button variant="ghost" size="sm" onClick={handlePaste} aria-label="Paste from clipboard">
+                <ClipboardPaste className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Paste
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setInput("")} title="Clear text">
-                <Trash2 className="w-4 h-4 mr-1.5" />
+              <Button variant="ghost" size="sm" onClick={() => setInput("")} aria-label="Clear original text">
+                <Trash2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Clear
               </Button>
             </div>
           </div>
-          <Card className="relative">
+          <Card className="relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 transition-shadow">
             <textarea
-              className="w-full h-[400px] p-4 text-sm font-mono bg-transparent border-none focus:ring-0 resize-none placeholder:text-stone-400"
+              aria-labelledby="original-text-label"
+              className="w-full h-[360px] p-5 text-sm leading-relaxed font-mono bg-transparent border-none focus:ring-0 resize-none placeholder:text-stone-400/70 text-stone-800"
               placeholder="Paste sensitive text here (e.g. logs, emails, documents)..."
               value={input}
               onChange={handleInputChange}
             />
-            <div className="absolute bottom-3 right-4 text-[10px] font-mono text-stone-400">
+            <div className="absolute bottom-3 right-4 text-[10px] font-mono text-stone-400/80 pointer-events-none select-none">
               {input.length} characters
             </div>
           </Card>
-          <p className="text-[11px] text-stone-500 italic">
-            Your data is processed locally or via a secure API. No data is stored by default.
+          <p className="text-[11px] text-stone-500" aria-hidden="true">
+            Data is processed securely. Results are not stored.
           </p>
         </div>
 
         {/* Output Column */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900">Redacted result</h3>
+            <h3 className="text-sm font-semibold text-stone-900" id="redacted-result-label">Redacted result</h3>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={!output}
                 onClick={handleCopy}
+                aria-label="Copy redacted text"
               >
-                <Copy className="w-4 h-4 mr-1.5" />
+                <Copy className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 {copySuccess ? "Copied!" : "Copy"}
               </Button>
               <Button
@@ -129,14 +131,20 @@ export const TextMode = () => {
                 size="sm"
                 disabled={!output}
                 onClick={() => output && downloadTextFile(output.output_text, "redacted.txt")}
+                aria-label="Download redacted text"
               >
-                <Download className="w-4 h-4 mr-1.5" />
+                <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Download
               </Button>
             </div>
           </div>
           <Card className="bg-stone-50/50">
-            <div className="w-full h-[400px] p-4 text-sm font-mono overflow-auto whitespace-pre-wrap text-stone-800">
+            <div 
+              className="w-full h-[360px] p-5 text-sm leading-relaxed font-mono overflow-auto whitespace-pre-wrap text-stone-800"
+              role="region"
+              aria-labelledby="redacted-result-label"
+              tabIndex={0}
+            >
               {error ? (
                 <div role="alert" className="h-full flex flex-col items-center justify-center text-red-500 space-y-2">
                   <AlertCircle className="w-8 h-8 opacity-50" />
@@ -158,21 +166,20 @@ export const TextMode = () => {
             </div>
           </Card>
           {output && !error && (
-            <div className="flex flex-wrap items-center gap-2 mt-2" aria-live="polite">
-              {output.summary && Object.entries(output.summary).map(([key, count]) => (
-                <Badge key={key} variant="indigo">
-                  {key}: {count as React.ReactNode}
-                </Badge>
-              ))}
-              {typeof output.replacements?.length === "number" && (
-                <Badge variant="neutral">
-                  Replacements: {output.replacements.length}
-                </Badge>
-              )}
+            <div className="flex flex-wrap items-center gap-2 mt-2 pl-1" aria-live="polite">
+              {output.summary?.replacement_count !== undefined ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700">
+                  {output.summary.replacement_count} replacement{output.summary.replacement_count !== 1 && 's'}
+                </span>
+              ) : output.replacements?.length > 0 ? (
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-stone-100 text-stone-700">
+                  {output.replacements.length} replacement{output.replacements.length !== 1 && 's'}
+                </span>
+              ) : null}
               {output.job_id && (
-                <div className="ml-auto text-[10px] font-mono text-stone-400">
-                  Job ID: {output.job_id}
-                </div>
+                <span className="ml-auto text-[10px] font-mono text-stone-400 select-all" title="Job ID">
+                  {output.job_id}
+                </span>
               )}
             </div>
           )}
@@ -181,76 +188,79 @@ export const TextMode = () => {
 
       {/* Action Row */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-stone-100">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             onClick={handleRedact}
             isLoading={isLoading}
             disabled={!input.trim()}
             className="w-full sm:w-auto px-8"
+            aria-label="Start text redaction"
           >
             Redact text
           </Button>
-          <Button variant="secondary" onClick={handleReset} disabled={isLoading}>
+          <Button variant="secondary" onClick={handleReset} disabled={isLoading} aria-label="Reset text mode workspace">
             Reset
           </Button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
           <label className="flex items-center gap-2 cursor-pointer group">
             <input
               type="checkbox"
               checked={redactOnInput}
               onChange={(e) => setRedactOnInput(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
+              className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-1 transition-all"
             />
-            <span className="text-[11px] font-medium text-stone-500 group-hover:text-stone-700">Redact on input</span>
+            <span className="text-xs font-medium text-stone-500 group-hover:text-stone-700 transition-colors">Redact on input</span>
           </label>
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 px-1"
+            aria-expanded={showAdvanced}
+            aria-controls="advanced-options-panel"
           >
-            <Settings2 className="w-4 h-4" />
+            <Settings2 className="w-4 h-4" aria-hidden="true" />
             Advanced options
-            {showAdvanced ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {showAdvanced ? <ChevronUp className="w-3 h-3" aria-hidden="true" /> : <ChevronDown className="w-3 h-3" aria-hidden="true" />}
           </button>
         </div>
       </div>
 
       {/* Advanced Options Panel */}
       {showAdvanced && (
-        <Card className="p-6 bg-stone-50/30 border-dashed">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <Card id="advanced-options-panel" className="p-5 mt-4 bg-stone-50 border-stone-200 transition-all">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500">Detection</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Detection</h4>
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={applyBuiltins}
                   onChange={(e) => setApplyBuiltins(e.target.checked)}
-                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                 />
-                <span className="text-sm text-stone-700 group-hover:text-stone-900">Use built-in detectors</span>
+                <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Use built-in detectors</span>
               </label>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-stone-600">Exact values to redact</label>
+              <div className="space-y-1.5 mt-2">
+                <label className="text-xs font-medium text-stone-600">Exact values to redact</label>
                 <input
                   type="text"
-                  placeholder="Comma separated values..."
+                  placeholder="Comma separated..."
                   value={exactValues}
                   onChange={(e) => setExactValues(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow"
                 />
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500">Transformation</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-stone-600">Mode</label>
+                <label className="text-xs font-medium text-stone-600">Mode</label>
                 <select
                   value={transformationMode}
                   onChange={(e) => setTransformationMode(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 >
                   <option value="semantic">Semantic Label</option>
                   <option value="mask">Full Mask</option>
@@ -258,27 +268,27 @@ export const TextMode = () => {
                   <option value="stable_alias">Stable Alias</option>
                 </select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-stone-600">Placeholder Label</label>
+              <div className="space-y-1.5 mt-2">
+                <label className="text-xs font-medium text-stone-600">Placeholder Label</label>
                 <input
                   type="text"
                   value={placeholderLabel}
                   onChange={(e) => setPlaceholderLabel(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 />
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500">Persistence</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Persistence</h4>
               <label className="flex items-center gap-3 cursor-pointer group">
                 <input
                   type="checkbox"
                   checked={persistJob}
                   onChange={(e) => setPersistJob(e.target.checked)}
-                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                 />
-                <span className="text-sm text-stone-700 group-hover:text-stone-900">Persist job metadata</span>
+                <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Persist job metadata</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer group opacity-50">
                 <input
@@ -286,7 +296,7 @@ export const TextMode = () => {
                   disabled
                   className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
                 />
-                <span className="text-sm text-stone-700">Persist source content (Disabled)</span>
+                <span className="text-sm text-stone-500 line-through decoration-stone-300">Persist source content</span>
               </label>
             </div>
           </div>

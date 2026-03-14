@@ -90,80 +90,88 @@ export const ImageMode = () => {
         {/* Input Column */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900">Original image</h3>
+            <h3 className="text-sm font-semibold text-stone-900" id="original-image-label">Original image</h3>
             {file && (
-              <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} title="Replace image">
-                <RefreshCw className="w-4 h-4 mr-1.5" />
+              <Button variant="ghost" size="sm" onClick={() => fileInputRef.current?.click()} aria-label="Replace image">
+                <RefreshCw className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Replace
               </Button>
             )}
           </div>
           <Card
-            className={`relative h-[400px] flex flex-col items-center justify-center transition-all ${
+            className={`relative h-[360px] flex flex-col items-center justify-center transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 ${
               !file ? "border-dashed bg-stone-50/50 hover:bg-stone-100/50 cursor-pointer" : ""
             }`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => !file && fileInputRef.current?.click()}
+            role="region"
+            aria-labelledby="original-image-label"
           >
             <input
               type="file"
               ref={fileInputRef}
-              className="hidden"
+              className="sr-only"
               accept="image/*"
               onChange={handleFileChange}
+              aria-label="Upload an image"
             />
             {previewUrl ? (
               <img
                 src={previewUrl}
-                alt="Original"
+                alt="Original uploaded"
                 className="max-w-full max-h-full object-contain p-4"
                 referrerPolicy="no-referrer"
               />
             ) : (
               <div className="flex flex-col items-center text-stone-400 space-y-4">
-                <div className="p-4 bg-white rounded-full shadow-sm border border-stone-100">
-                  <Upload className="w-8 h-8 text-indigo-500" />
+                <div className="p-4 bg-white rounded-full shadow-sm border border-stone-100 group-hover:scale-105 transition-transform duration-200">
+                  <Upload className="w-8 h-8 text-indigo-500" aria-hidden="true" />
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-medium text-stone-600">Drag & drop or click to browse</p>
-                  <p className="text-xs mt-1">Supports PNG, JPG, WebP up to 10MB</p>
+                  <p className="text-xs mt-1 text-stone-400">Supports PNG, JPG, WebP up to 10MB</p>
                 </div>
               </div>
             )}
           </Card>
-          <p className="text-[11px] text-stone-500 italic">
-            Images are processed securely. Redaction happens on the server and results are returned to you.
+          <p className="text-[11px] text-stone-400 pl-1" aria-hidden="true">
+            Images are processed securely. Results are not stored.
           </p>
         </div>
 
         {/* Output Column */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900">Redacted output</h3>
+            <h3 className="text-sm font-semibold text-stone-900" id="redacted-image-label">Redacted output</h3>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={!output}
                 onClick={() => setShowOriginal(!showOriginal)}
-                title={showOriginal ? "Show redacted" : "Show original"}
+                aria-label={showOriginal ? "Hide original image" : "Compare with original"}
               >
-                {showOriginal ? <EyeOff className="w-4 h-4 mr-1.5" /> : <Eye className="w-4 h-4 mr-1.5" />}
-                {showOriginal ? "Hide original" : "Compare"}
+                {showOriginal ? <EyeOff className="w-4 h-4 mr-1.5" aria-hidden="true" /> : <Eye className="w-4 h-4 mr-1.5" aria-hidden="true" />}
+                {showOriginal ? "Hide" : "Compare"}
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
                 disabled={!output}
                 onClick={() => output && downloadImageFile(output.output_image_url, "redacted_image.png")}
+                aria-label="Download redacted image"
               >
-                <Download className="w-4 h-4 mr-1.5" />
+                <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Download
               </Button>
             </div>
           </div>
-          <Card className="bg-stone-50/50 h-[400px] flex items-center justify-center relative">
+          <Card 
+            className="bg-stone-50/50 h-[360px] flex items-center justify-center relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1"
+            role="region"
+            aria-labelledby="redacted-image-label"
+          >
             {error ? (
               <div role="alert" className="flex flex-col items-center justify-center text-red-500 space-y-2 p-4 text-center">
                 <AlertCircle className="w-8 h-8 opacity-50" />
@@ -200,16 +208,16 @@ export const ImageMode = () => {
             )}
           </Card>
           {analysis && !error && (
-            <div className="flex flex-wrap items-center gap-2" aria-live="polite">
+            <div className="flex flex-wrap items-center gap-2 mt-2 pl-1" aria-live="polite">
               {analysis.summary && Object.entries(analysis.summary).map(([key, count]) => (
-                <Badge key={key} variant="indigo">
-                  {key}: {count as React.ReactNode}
-                </Badge>
+                <span key={key} className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700 capitalize">
+                  {key.replace(/_/g, ' ')}: {count as React.ReactNode}
+                </span>
               ))}
               {analysis.job_id && (
-                <div className="ml-auto text-[10px] font-mono text-stone-400">
-                  Job ID: {analysis.job_id}
-                </div>
+                <span className="ml-auto text-[10px] font-mono text-stone-400 select-all" title="Job ID">
+                  {analysis.job_id}
+                </span>
               )}
             </div>
           )}
@@ -218,77 +226,81 @@ export const ImageMode = () => {
 
       {/* Action Row */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-stone-100">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 w-full sm:w-auto">
           <Button
             variant="outline"
             onClick={handleAnalyze}
-            isLoading={isLoading}
+            isLoading={isLoading && !output}
             disabled={!file || isLoading}
             className="w-full sm:w-auto"
+            aria-label="Analyze image for sensitive data"
           >
             Analyze image
           </Button>
           <Button
             onClick={handleRedact}
-            isLoading={isLoading}
+            isLoading={isLoading && !!analysis}
             disabled={!file || isLoading}
             className="w-full sm:w-auto px-8"
+            aria-label="Redact image"
           >
             Redact image
           </Button>
-          <Button variant="secondary" onClick={handleReset} disabled={isLoading}>
+          <Button variant="secondary" onClick={handleReset} disabled={isLoading} aria-label="Reset image workspace">
             Reset
           </Button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-center sm:justify-end w-full sm:w-auto mt-4 sm:mt-0">
           <button
             onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 px-1"
+            aria-expanded={showAdvanced}
+            aria-controls="image-advanced-options"
           >
-            <Settings2 className="w-4 h-4" />
+            <Settings2 className="w-4 h-4" aria-hidden="true" />
             Advanced options
-            {showAdvanced ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            {showAdvanced ? <ChevronUp className="w-3 h-3" aria-hidden="true" /> : <ChevronDown className="w-3 h-3" aria-hidden="true" />}
           </button>
         </div>
       </div>
 
       {/* Advanced Options Panel */}
       {showAdvanced && (
-        <Card className="p-6 bg-stone-50/30 border-dashed">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <Card id="image-advanced-options" className="p-5 mt-4 bg-stone-50 border-stone-200 transition-all">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500">Detection</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Detection</h4>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={detectText}
                     onChange={(e) => setDetectText(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                   />
-                  <span className="text-sm text-stone-700 group-hover:text-stone-900">Detect text regions</span>
+                  <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Detect text regions</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer group">
                   <input
                     type="checkbox"
                     checked={detectFaces}
                     onChange={(e) => setDetectFaces(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                   />
-                  <span className="text-sm text-stone-700 group-hover:text-stone-900">Detect faces</span>
+                  <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Detect faces</span>
                 </label>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500">Transformation</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-stone-600">Mode</label>
+                <label className="text-xs font-medium text-stone-600">Mode</label>
                 <select
                   value={transformMode}
                   onChange={(e) => setTransformMode(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 >
                   <option value="mask">Solid Mask</option>
                   <option value="blur">Blur</option>
@@ -297,8 +309,8 @@ export const ImageMode = () => {
                 </select>
               </div>
               {transformMode === "blur" && (
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-stone-600">Blur Radius: {blurRadius}px</label>
+                <div className="space-y-1.5 mt-2">
+                  <label className="text-xs font-medium text-stone-600">Blur Radius: {blurRadius}px</label>
                   <input
                     type="range"
                     min="5"
@@ -312,12 +324,12 @@ export const ImageMode = () => {
             </div>
 
             <div className="space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-stone-500">Manual Regions</h4>
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Manual Regions</h4>
               <div className="space-y-1.5">
-                <label className="text-[11px] font-semibold text-stone-600">Regions JSON (Advanced)</label>
+                <label className="text-xs font-medium text-stone-600">Regions JSON (Advanced)</label>
                 <textarea
                   placeholder='[{"x": 10, "y": 10, "w": 100, "h": 50}]'
-                  className="w-full h-24 px-3 py-1.5 text-[10px] font-mono rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 outline-none resize-none"
+                  className="w-full h-24 px-3 py-2 text-xs font-mono rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-shadow"
                 />
               </div>
             </div>
