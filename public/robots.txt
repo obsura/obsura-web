@@ -45,4 +45,4 @@ User-agent: DotBot
 Disallow: /
 
 # Tell Search Engines where to find your map
-Sitemap: https://obsura.com/sitemap.xml
+Sitemap: https://obsura.one/sitemap.xml
