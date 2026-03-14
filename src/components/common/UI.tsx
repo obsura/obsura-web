@@ -15,11 +15,11 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", isLoading, children, disabled, ...props }, ref) => {
     const variants = {
-      primary: "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm",
-      secondary: "bg-stone-100 text-stone-900 hover:bg-stone-200",
-      outline: "border border-stone-200 bg-white text-stone-900 hover:bg-stone-50",
-      ghost: "text-stone-600 hover:bg-stone-100 hover:text-stone-900",
-      danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-100",
+      primary: "bg-[var(--brand-primary)] text-white hover:bg-[var(--brand-primary-strong)] shadow-sm",
+      secondary: "bg-[var(--bg-subtle)] text-[var(--text-primary)] hover:bg-[color-mix(in_srgb,var(--bg-subtle)_82%,var(--line-subtle)_18%)]",
+      outline: "border border-[var(--line-subtle)] bg-[var(--bg-surface)] text-[var(--text-primary)] hover:bg-[var(--bg-subtle)]",
+      ghost: "text-[var(--text-secondary)] hover:bg-[var(--bg-subtle)] hover:text-[var(--text-primary)]",
+      danger: "bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/60",
     };
 
     const sizes = {
@@ -34,7 +34,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={cn(
-          "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
+          "inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--focus-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--bg-canvas)] disabled:opacity-50 disabled:pointer-events-none",
           variants[variant],
           sizes[size],
           className
@@ -51,18 +51,18 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 
 export const Card = ({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn("bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden", className)} {...props}>
+  <div className={cn("surface rounded-xl overflow-hidden", className)} {...props}>
     {children}
   </div>
 );
 
 export const Badge = ({ className, children, variant = "neutral", ...props }: React.HTMLAttributes<HTMLSpanElement> & { variant?: "neutral" | "success" | "warning" | "error" | "indigo" }) => {
   const variants = {
-    neutral: "bg-stone-100 text-stone-600 border-stone-200",
+    neutral: "bg-[var(--bg-subtle)] text-[var(--text-secondary)] border-[var(--line-subtle)]",
     success: "bg-emerald-50 text-emerald-700 border-emerald-100",
     warning: "bg-amber-50 text-amber-700 border-amber-100",
     error: "bg-red-50 text-red-700 border-red-100",
-    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
+    indigo: "bg-sky-50 text-sky-700 border-sky-100 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/60",
   };
 
   return (
@@ -71,3 +71,24 @@ export const Badge = ({ className, children, variant = "neutral", ...props }: Re
     </span>
   );
 };
+
+export const SectionHeading = ({
+  title,
+  subtitle,
+  className,
+}: {
+  title: string;
+  subtitle?: string;
+  className?: string;
+}) => {
+  return (
+    <div className={cn("space-y-1", className)}>
+      <h3 className="text-sm font-semibold text-[var(--text-primary)]">{title}</h3>
+      {subtitle ? <p className="text-xs text-[var(--text-muted)]">{subtitle}</p> : null}
+    </div>
+  );
+};
+
+export const Divider = ({ className }: { className?: string }) => (
+  <div className={cn("h-px w-full bg-[var(--line-subtle)]", className)} aria-hidden="true" />
+);

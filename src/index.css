@@ -1,8 +1,171 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
 }
-.custom-scrollbar::-webkit-scrollbar { height: 6px; } .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; } .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+:root {
+  color-scheme: light;
+  --brand-primary: #0f766e;
+  --brand-primary-strong: #115e59;
+  --brand-accent: #0ea5e9;
+  --bg-canvas: #f4f7f9;
+  --bg-elevated: rgba(255, 255, 255, 0.82);
+  --bg-surface: #ffffff;
+  --bg-subtle: #eef2f6;
+  --line-subtle: #dbe3ea;
+  --line-strong: #bfccd8;
+  --text-primary: #0f1720;
+  --text-secondary: #4b5a68;
+  --text-muted: #6f8091;
+  --focus-ring: #0ea5e9;
+  --shadow-soft: 0 20px 45px -28px rgba(8, 20, 30, 0.35);
+  --surface-glow: radial-gradient(circle at 12% 8%, rgba(14, 165, 233, 0.2), rgba(14, 165, 233, 0) 36%), radial-gradient(circle at 90% 0%, rgba(15, 118, 110, 0.14), rgba(15, 118, 110, 0) 42%);
+}
+
+.dark {
+  color-scheme: dark;
+  --brand-primary: #2dd4bf;
+  --brand-primary-strong: #14b8a6;
+  --brand-accent: #38bdf8;
+  --bg-canvas: #061017;
+  --bg-elevated: rgba(10, 24, 33, 0.84);
+  --bg-surface: #0f1f2b;
+  --bg-subtle: #142838;
+  --line-subtle: #234054;
+  --line-strong: #32556d;
+  --text-primary: #e8f4ff;
+  --text-secondary: #b7cadb;
+  --text-muted: #8fa8bc;
+  --focus-ring: #38bdf8;
+  --shadow-soft: 0 22px 48px -30px rgba(1, 10, 17, 0.8);
+  --surface-glow: radial-gradient(circle at 12% 8%, rgba(56, 189, 248, 0.2), rgba(56, 189, 248, 0) 36%), radial-gradient(circle at 90% 0%, rgba(45, 212, 191, 0.16), rgba(45, 212, 191, 0) 42%);
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+.app-shell {
+  background-color: var(--bg-canvas);
+  background-image: var(--surface-glow);
+}
+
+.surface {
+  background: var(--bg-surface);
+  border: 1px solid var(--line-subtle);
+  box-shadow: var(--shadow-soft);
+}
+
+.surface-muted {
+  background: var(--bg-subtle);
+  border: 1px solid var(--line-subtle);
+}
+
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.ring-brand:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: var(--bg-subtle);
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-primary);
+}
+
+/* Compatibility bridge for existing utility-based surfaces until full token migration. */
+.dark .bg-white,
+.dark .bg-white\/80 {
+  background-color: var(--bg-surface) !important;
+}
+
+.dark .bg-stone-50,
+.dark .bg-stone-50\/50,
+.dark .bg-stone-100,
+.dark .bg-stone-200\/50 {
+  background-color: var(--bg-subtle) !important;
+}
+
+.dark .border-stone-100,
+.dark .border-stone-200,
+.dark .border-stone-300 {
+  border-color: var(--line-subtle) !important;
+}
+
+.dark .text-stone-900,
+.dark .text-stone-800,
+.dark .text-stone-700,
+.dark .text-stone-600 {
+  color: var(--text-primary) !important;
+}
+
+.dark .text-stone-500,
+.dark .text-stone-400 {
+  color: var(--text-secondary) !important;
+}
+
+.dark .hover\:bg-stone-50:hover,
+.dark .hover\:bg-stone-100:hover,
+.dark .hover\:bg-stone-200:hover {
+  background-color: color-mix(in srgb, var(--bg-subtle) 82%, var(--line-subtle) 18%) !important;
+}
+
+.dark .hover\:text-stone-700:hover,
+.dark .hover\:text-stone-900:hover {
+  color: var(--text-primary) !important;
+}
+
+.dark .focus-within\:ring-indigo-500:focus-within,
+.dark .focus-visible\:ring-indigo-500:focus-visible,
+.dark .focus\:ring-indigo-500:focus {
+  --tw-ring-color: var(--focus-ring) !important;
+}
+
+.dark .text-indigo-600,
+.dark .text-indigo-700,
+.dark .text-indigo-500 {
+  color: var(--brand-accent) !important;
+}
+
+.dark .bg-indigo-50 {
+  background-color: rgba(56, 189, 248, 0.18) !important;
+}
+
+.dark .border-indigo-100,
+.dark .border-indigo-500 {
+  border-color: rgba(56, 189, 248, 0.4) !important;
+}
