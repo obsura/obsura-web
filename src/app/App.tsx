@@ -3,17 +3,18 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from "react";
 import { Header } from "../components/layout/Header";
 import { TextMode } from "../components/text/TextMode";
 import { ImageMode } from "../components/image/ImageMode";
+import { DeveloperProfile } from "../components/layout/DeveloperProfile";
 import { RedactionMode } from "../lib/types";
 import { cn } from "../lib/utils";
 import { Type, Image as ImageIcon, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useLocalStorage } from "../hooks/use-local-storage";
 
 export default function App() {
-  const [mode, setMode] = useState<RedactionMode>("text");
+  const [mode, setMode] = useLocalStorage<RedactionMode>("obsura_active_mode", "text");
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
@@ -28,7 +29,7 @@ export default function App() {
               Privacy First Redaction
             </div>
             <h2 className="text-3xl md:text-4xl font-extrabold text-stone-900 tracking-tight">
-              Protect sensitive data in seconds.
+              Reduct sensitive PII in seconds.
             </h2>
             <p className="text-stone-500 max-w-2xl mx-auto text-base md:text-lg">
               Obsura helps you safely share documents and screenshots by automatically redacting PII, secrets, and sensitive information.
@@ -84,7 +85,7 @@ export default function App() {
           <footer className="pt-6 pb-2">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-[11px] text-stone-400">
-                &copy; 2026 Obsura Project. Created with &hearts; by <a href="https://github.com/elqabasy" target="_blank">0xQ4B4S</a>.
+                &copy; 2026 Obsura Project. Created with &hearts; by <DeveloperProfile />.
               </p>
               <div className="flex items-center gap-6">
                 <a href="#" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors">Privacy Policy</a>

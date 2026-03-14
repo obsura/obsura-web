@@ -106,8 +106,8 @@ export interface ImageAnalyzeResponse {
 }
 
 export interface ImageTransformResponse {
-  output_image_url: string; // In our case, this might be a blob URL or base64
-  job_id: string;
+  media_url?: string;
+  output_image_url?: string;
 }
 
 export interface ApiError {
