@@ -13,8 +13,12 @@ import { useImageRedaction } from "../../hooks/use-image-redaction";
 import { useLocalStorage } from "../../hooks/use-local-storage";
 
 export const ImageMode = () => {
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [files, setFiles] = React.useState<{ id: string; file: File; previewUrl: string; }[]>([]);
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  const activeFileObj = files[activeIndex];
+  const file = activeFileObj?.file || null;
+  const previewUrl = activeFileObj?.previewUrl || null;
   const [showAdvanced, setShowAdvanced] = useLocalStorage("obsura_img_showAdvanced", false);
   const [sliderPos, setSliderPos] = useState(50);
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -111,24 +115,36 @@ export const ImageMode = () => {
     }
   }, [file, autoProcess, handleRedact]);
 
+  const handleFilesAdded = React.useCallback((newFiles: File[]) => {
+    const validFiles = newFiles.filter(f => f.type.startsWith("image/"));
+    if (validFiles.length === 0) return;
+    
+    const fileObjs = validFiles.map(f => ({
+      id: Math.random().toString(36).substring(7),
+      file: f,
+      previewUrl: URL.createObjectURL(f)
+    }));
+    
+    setFiles(prev => {
+      const next = [...prev, ...fileObjs];
+      if (prev.length === 0) {
+        setActiveIndex(0);
+        resetHook();
+      }
+      return next;
+    });
+  }, [resetHook]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0];
-    if (selectedFile) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-      resetHook();
+    if (e.target.files?.length) {
+      handleFilesAdded(Array.from(e.target.files));
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    const selectedFile = e.dataTransfer.files?.[0];
-    if (selectedFile && selectedFile.type.startsWith("image/")) {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setFile(selectedFile);
-      setPreviewUrl(URL.createObjectURL(selectedFile));
-      resetHook();
+    if (e.dataTransfer.files?.length) {
+      handleFilesAdded(Array.from(e.dataTransfer.files));
     }
   };
 
