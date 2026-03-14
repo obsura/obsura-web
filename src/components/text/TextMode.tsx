@@ -3,17 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback } from "react";
-import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import React, { useState, useCallback, useEffect } from "react";
+import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
 import { Button, Card, Badge } from "../common/UI";
-import { api } from "../../lib/api";
-import { TextAnalyzeTransformRequest, TextAnalyzeTransformResponse } from "../../lib/types";
+import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
+import { useTextRedaction } from "../../hooks/use-text-redaction";
 
 export const TextMode = () => {
   const [input, setInput] = useState("");
-  const [output, setOutput] = useState<TextAnalyzeTransformResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [redactOnInput, setRedactOnInput] = useState(false);
@@ -22,32 +20,39 @@ export const TextMode = () => {
   const [applyBuiltins, setApplyBuiltins] = useState(true);
   const [persistJob, setPersistJob] = useState(false);
   const [transformationMode, setTransformationMode] = useState<any>("semantic");
+  const [exactValues, setExactValues] = useState("");
+  const [placeholderLabel, setPlaceholderLabel] = useState("SENSITIVE_VALUE");
 
-  const handleRedact = async () => {
+  const { output, isLoading, error, redactText, reset } = useTextRedaction();
+
+  const handleRedact = useCallback(() => {
     if (!input.trim()) return;
-    setIsLoading(true);
-    try {
-      const payload: TextAnalyzeTransformRequest = {
-        content: input,
-        apply_builtins: applyBuiltins,
-        persist_job: persistJob,
-        default_transformation: {
-          mode: transformationMode,
-          semantic_label: "SENSITIVE_VALUE",
-        },
-      };
-      const res = await api.analyzeTransformText(payload);
-      setOutput(res);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
+    const payload: TextAnalyzeTransformRequest = {
+      content: input,
+      apply_builtins: applyBuiltins,
+      persist_job: persistJob,
+      exact_values: exactValues.split(",").map(v => v.trim()).filter(Boolean),
+      default_transformation: {
+        mode: transformationMode,
+        semantic_label: placeholderLabel,
+      },
+    };
+    redactText(payload);
+  }, [input, applyBuiltins, persistJob, exactValues, transformationMode, placeholderLabel, redactText]);
+
+  // Debounced execution for Redact on input
+  useEffect(() => {
+    if (redactOnInput && input.trim()) {
+      const handler = setTimeout(() => {
+        handleRedact();
+      }, 600);
+      return () => clearTimeout(handler);
     }
-  };
+  }, [input, redactOnInput, handleRedact]);
 
   const handleReset = () => {
     setInput("");
-    setOutput(null);
+    reset();
   };
 
   const handleCopy = useCallback(() => {
@@ -68,11 +73,7 @@ export const TextMode = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const value = e.target.value;
-    setInput(value);
-    if (redactOnInput && value.trim()) {
-      handleRedact();
-    }
+    setInput(e.target.value);
   };
 
   return (
@@ -136,8 +137,18 @@ export const TextMode = () => {
           </div>
           <Card className="bg-stone-50/50">
             <div className="w-full h-[400px] p-4 text-sm font-mono overflow-auto whitespace-pre-wrap text-stone-800">
-              {output ? (
-                output.output_text
+              {error ? (
+                <div role="alert" className="h-full flex flex-col items-center justify-center text-red-500 space-y-2">
+                  <AlertCircle className="w-8 h-8 opacity-50" />
+                  <p className="text-xs text-center max-w-sm">{error}</p>
+                </div>
+              ) : isLoading && !output ? (
+                <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-2 animate-pulse">
+                  <RefreshCw className="w-8 h-8 opacity-20 animate-spin" />
+                  <p className="text-xs" aria-live="polite">Analyzing and redacting...</p>
+                </div>
+              ) : output ? (
+                <span aria-live="polite">{output.output_text}</span>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-2">
                   <RefreshCw className="w-8 h-8 opacity-20" />
@@ -146,16 +157,23 @@ export const TextMode = () => {
               )}
             </div>
           </Card>
-          {output && (
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(output.summary).map(([key, count]) => (
+          {output && !error && (
+            <div className="flex flex-wrap items-center gap-2 mt-2" aria-live="polite">
+              {output.summary && Object.entries(output.summary).map(([key, count]) => (
                 <Badge key={key} variant="indigo">
-                  {key}: {count}
+                  {key}: {count as React.ReactNode}
                 </Badge>
               ))}
-              <div className="ml-auto text-[10px] font-mono text-stone-400">
-                Job ID: {output.job_id}
-              </div>
+              {typeof output.replacements?.length === "number" && (
+                <Badge variant="neutral">
+                  Replacements: {output.replacements.length}
+                </Badge>
+              )}
+              {output.job_id && (
+                <div className="ml-auto text-[10px] font-mono text-stone-400">
+                  Job ID: {output.job_id}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -218,6 +236,8 @@ export const TextMode = () => {
                 <input
                   type="text"
                   placeholder="Comma separated values..."
+                  value={exactValues}
+                  onChange={(e) => setExactValues(e.target.value)}
                   className="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                 />
               </div>
@@ -242,7 +262,8 @@ export const TextMode = () => {
                 <label className="text-[11px] font-semibold text-stone-600">Placeholder Label</label>
                 <input
                   type="text"
-                  defaultValue="SENSITIVE_VALUE"
+                  value={placeholderLabel}
+                  onChange={(e) => setPlaceholderLabel(e.target.value)}
                   className="w-full px-3 py-1.5 text-sm rounded-lg border border-stone-200 focus:ring-2 focus:ring-indigo-500 outline-none"
                 />
               </div>

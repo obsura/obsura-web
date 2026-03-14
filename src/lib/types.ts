@@ -55,17 +55,23 @@ export interface TextAnalyzeTransformRequest {
 
 export interface TextReplacement {
   entity_type: string;
-  original_text: string;
-  transformed_text: string;
-  start: number;
-  end: number;
+  start_index?: number;
+  end_index?: number;
+  original_preview?: string;
+  output_value?: string;
+  
+  // Backwards compatibility fallbacks just in case
+  original_text?: string;
+  transformed_text?: string;
+  start?: number;
+  end?: number;
 }
 
 export interface TextAnalyzeTransformResponse {
   output_text: string;
   replacements: TextReplacement[];
   summary: Record<string, number>;
-  job_id: string;
+  job_id: string | null;
 }
 
 export interface ImageAnalyzeManifest {

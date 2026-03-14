@@ -3,24 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useEffect, useState } from "react";
-import { Shield, Github, BookOpen, Activity, CheckCircle2, Info } from "lucide-react";
-import { api } from "../../lib/api";
-import { HealthResponse, VersionResponse } from "../../lib/types";
+import { Shield, Github, BookOpen, Activity, CheckCircle2, Info, RefreshCw, XCircle } from "lucide-react";
 import { Badge } from "../common/UI";
+import { useApiStatus } from "../../hooks/use-api-status";
 
 export const Header = () => {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [version, setVersion] = useState<VersionResponse | null>(null);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const [h, v] = await Promise.all([api.getHealth(), api.getVersion()]);
-      setHealth(h);
-      setVersion(v);
-    };
-    fetchData();
-  }, []);
+  const { health, version, loading, error, refetch } = useApiStatus();
 
   return (
     <header className="w-full border-b border-stone-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
@@ -39,21 +27,35 @@ export const Header = () => {
 
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-2">
-            {health && (
-              <Badge variant={health.status === "ok" ? "success" : "error"}>
-                <Activity className="w-3 h-3 mr-1" />
-                API: {health.status}
+            {loading ? (
+              <Badge variant="neutral" className="opacity-50 animate-pulse">
+                <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                Checking API...
               </Badge>
-            )}
-            <Badge variant="success">
-              <CheckCircle2 className="w-3 h-3 mr-1" />
-              Ready
-            </Badge>
-            {version && (
-              <Badge variant="neutral">
-                <Info className="w-3 h-3 mr-1" />
-                v{version.version}
-              </Badge>
+            ) : error ? (
+              <button onClick={refetch} className="hover:opacity-80 transition-opacity" title="Retry connection">
+                <Badge variant="error" className="cursor-pointer">
+                  <XCircle className="w-3 h-3 mr-1" />
+                  API Offline
+                </Badge>
+              </button>
+            ) : (
+              <>
+                <Badge variant={health?.status === "ok" ? "success" : "error"}>
+                  <Activity className="w-3 h-3 mr-1" />
+                  API: {health?.status || "Unknown"}
+                </Badge>
+                <Badge variant="success">
+                  <CheckCircle2 className="w-3 h-3 mr-1" />
+                  Ready
+                </Badge>
+                {version && (
+                  <Badge variant="neutral">
+                    <Info className="w-3 h-3 mr-1" />
+                    v{version.version}
+                  </Badge>
+                )}
+              </>
             )}
           </div>
 

@@ -4,18 +4,15 @@
  */
 
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff } from "lucide-react";
+import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { Button, Card, Badge } from "../common/UI";
-import { api } from "../../lib/api";
-import { ImageAnalyzeManifest, ImageTransformManifest, ImageAnalyzeResponse, ImageTransformResponse } from "../../lib/types";
+import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
+import { useImageRedaction } from "../../hooks/use-image-redaction";
 
 export const ImageMode = () => {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [analysis, setAnalysis] = useState<ImageAnalyzeResponse | null>(null);
-  const [output, setOutput] = useState<ImageTransformResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,14 +21,17 @@ export const ImageMode = () => {
   const [detectText, setDetectText] = useState(true);
   const [detectFaces, setDetectFaces] = useState(false);
   const [transformMode, setTransformMode] = useState<any>("mask");
+  const [blurRadius, setBlurRadius] = useState(20);
+
+  const { analysis, output, isLoading, error, analyzeImage, redactImage, reset: resetHook } = useImageRedaction();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
-      setAnalysis(null);
-      setOutput(null);
+      resetHook();
     }
   };
 
@@ -39,59 +39,50 @@ export const ImageMode = () => {
     e.preventDefault();
     const selectedFile = e.dataTransfer.files?.[0];
     if (selectedFile && selectedFile.type.startsWith("image/")) {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(selectedFile);
       setPreviewUrl(URL.createObjectURL(selectedFile));
-      setAnalysis(null);
-      setOutput(null);
+      resetHook();
     }
   };
 
-  const handleAnalyze = async () => {
+  const handleAnalyze = () => {
     if (!file) return;
-    setIsLoading(true);
-    try {
-      const manifest: ImageAnalyzeManifest = {
-        detect_text: detectText,
-        detect_faces: detectFaces,
-        apply_builtins: true,
-      };
-      const res = await api.analyzeImage(file, manifest);
-      setAnalysis(res);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    const manifest: ImageAnalyzeManifest = {
+      detect_text: detectText,
+      detect_faces: detectFaces,
+      apply_builtins: true,
+    };
+    analyzeImage(file, manifest);
   };
 
-  const handleRedact = async () => {
+  const handleRedact = () => {
     if (!file) return;
-    setIsLoading(true);
-    try {
-      const manifest: ImageTransformManifest = {
-        detect_text: detectText,
-        detect_faces: detectFaces,
-        default_transformation: {
-          mode: transformMode,
-          overlay_color: "#111111",
-          overlay_label: "REDACTED",
-        },
-      };
-      const res = await api.transformImage(file, manifest);
-      setOutput(res);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoading(false);
-    }
+    const manifest: ImageTransformManifest = {
+      detect_text: detectText,
+      detect_faces: detectFaces,
+      default_transformation: {
+        mode: transformMode,
+        overlay_color: "#111111",
+        overlay_label: "REDACTED",
+        blur_radius: Number(blurRadius),
+      },
+    };
+    redactImage(file, manifest);
   };
 
   const handleReset = () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
     setFile(null);
     setPreviewUrl(null);
-    setAnalysis(null);
-    setOutput(null);
+    resetHook();
   };
+
+  React.useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
 
   return (
     <div className="space-y-6">
@@ -173,13 +164,29 @@ export const ImageMode = () => {
             </div>
           </div>
           <Card className="bg-stone-50/50 h-[400px] flex items-center justify-center relative">
-            {output ? (
+            {error ? (
+              <div role="alert" className="flex flex-col items-center justify-center text-red-500 space-y-2 p-4 text-center">
+                <AlertCircle className="w-8 h-8 opacity-50" />
+                <p className="text-xs max-w-[80%]">{error}</p>
+              </div>
+            ) : isLoading && !output && !analysis ? (
+              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2 animate-pulse">
+                <RefreshCw className="w-8 h-8 opacity-20 animate-spin" />
+                <p className="text-xs" aria-live="polite">Processing image...</p>
+              </div>
+            ) : output ? (
               <img
                 src={showOriginal ? previewUrl! : output.output_image_url}
                 alt="Redacted"
                 className="max-w-full max-h-full object-contain p-4"
                 referrerPolicy="no-referrer"
               />
+            ) : analysis ? (
+              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2">
+                <ImageIcon className="w-8 h-8 opacity-20" />
+                <p className="text-xs font-medium text-stone-600">Analysis complete</p>
+                <p className="text-xs">Click "Redact image" to apply transformations</p>
+              </div>
             ) : (
               <div className="flex flex-col items-center justify-center text-stone-400 space-y-2">
                 <ImageIcon className="w-8 h-8 opacity-20" />
@@ -192,16 +199,18 @@ export const ImageMode = () => {
               </div>
             )}
           </Card>
-          {analysis && (
-            <div className="flex flex-wrap gap-2">
-              {Object.entries(analysis.summary).map(([key, count]) => (
+          {analysis && !error && (
+            <div className="flex flex-wrap items-center gap-2" aria-live="polite">
+              {analysis.summary && Object.entries(analysis.summary).map(([key, count]) => (
                 <Badge key={key} variant="indigo">
-                  {key}: {count}
+                  {key}: {count as React.ReactNode}
                 </Badge>
               ))}
-              <div className="ml-auto text-[10px] font-mono text-stone-400">
-                Job ID: {analysis.job_id}
-              </div>
+              {analysis.job_id && (
+                <div className="ml-auto text-[10px] font-mono text-stone-400">
+                  Job ID: {analysis.job_id}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -289,12 +298,13 @@ export const ImageMode = () => {
               </div>
               {transformMode === "blur" && (
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-semibold text-stone-600">Blur Radius</label>
+                  <label className="text-[11px] font-semibold text-stone-600">Blur Radius: {blurRadius}px</label>
                   <input
                     type="range"
                     min="5"
                     max="50"
-                    defaultValue="20"
+                    value={blurRadius}
+                    onChange={(e) => setBlurRadius(Number(e.target.value))}
                     className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
                 </div>
