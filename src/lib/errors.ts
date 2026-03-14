@@ -24,7 +24,12 @@ export const handleApiError = async (res: Response) => {
     } catch {
       // Body not JSON
     }
-    throw new ApiError(message, res.status, errorData?.details || errorData, errorData);
+    throw new ApiError(
+      message,
+      res.status,
+      errorData?.details || errorData,
+      errorData,
+    );
   }
   return res;
 };

@@ -21,10 +21,14 @@ import { handleApiError } from "./errors";
 const MOCK_DELAY = 800;
 
 const mockTextResponse = (content: string): TextAnalyzeTransformResponse => ({
-  output_text: content.replace(/(\d{4}-\d{4}-\d{4}-\d{4})/g, "[REDACTED_CARD_NUMBER]")
-                     .replace(/(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)/g, "[REDACTED_EMAIL]"),
+  output_text: content
+    .replace(/(\d{4}-\d{4}-\d{4}-\d{4})/g, "[REDACTED_CARD_NUMBER]")
+    .replace(
+      /(\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b)/g,
+      "[REDACTED_EMAIL]",
+    ),
   replacements: [],
-  summary: { "Credit Card": 1, "Email": 1 },
+  summary: { "Credit Card": 1, Email: 1 },
   job_id: `job_${Math.random().toString(36).substring(2, 11)}`,
 });
 
@@ -65,41 +69,48 @@ export const api = {
       return json.data ?? json;
     } catch (e: any) {
       if (e.name === "AbortError") throw e;
-      return { version: "1.0.0-oss", commit: "mock-build", build_date: new Date().toISOString() };
+      return {
+        version: "1.0.0-oss",
+        commit: "mock-build",
+        build_date: new Date().toISOString(),
+      };
     }
   },
 
   async analyzeTransformText(
     payload: TextAnalyzeTransformRequest,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<TextAnalyzeTransformResponse> {
     if (env.MOCK_MODE) {
-      await new Promise(r => setTimeout(r, MOCK_DELAY));
+      await new Promise((r) => setTimeout(r, MOCK_DELAY));
       return mockTextResponse(payload.content);
     }
-    
-    const res = await fetch(`${env.API_BASE_URL}/workflows/text/analyze-transform`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-      signal,
-    });
-    
+
+    const res = await fetch(
+      `${env.API_BASE_URL}/workflows/text/analyze-transform`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal,
+      },
+    );
+
     await handleApiError(res);
     const json = await res.json();
     return json.data ?? json;
   },
 
   async analyzeImage(
-    file: File, 
+    file: File,
     manifest: ImageAnalyzeManifest,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<ImageAnalyzeResponse> {
     if (env.MOCK_MODE) {
-      await new Promise(r => setTimeout(r, MOCK_DELAY));
+      await new Promise((r) => setTimeout(r, MOCK_DELAY));
       return {
         regions: [],
-        summary: { "PII": 3, "Faces": 1 },
+        summary: { PII: 3, Faces: 1 },
         job_id: `img_job_${Math.random().toString(36).substring(2, 11)}`,
       };
     }
@@ -113,19 +124,19 @@ export const api = {
       body: formData,
       signal,
     });
-    
+
     await handleApiError(res);
     const json = await res.json();
     return json.data ?? json;
   },
 
   async transformImage(
-    file: File, 
+    file: File,
     manifest: ImageTransformManifest,
-    signal?: AbortSignal
+    signal?: AbortSignal,
   ): Promise<ImageTransformResponse> {
     if (env.MOCK_MODE) {
-      await new Promise(r => setTimeout(r, MOCK_DELAY));
+      await new Promise((r) => setTimeout(r, MOCK_DELAY));
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => {
@@ -147,7 +158,7 @@ export const api = {
       body: formData,
       signal,
     });
-    
+
     await handleApiError(res);
     const json = await res.json();
     return json.data ?? json;

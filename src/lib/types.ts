@@ -59,7 +59,7 @@ export interface TextReplacement {
   end_index?: number;
   original_preview?: string;
   output_value?: string;
-  
+
   // Backwards compatibility fallbacks just in case
   original_text?: string;
   transformed_text?: string;
