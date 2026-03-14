@@ -14,7 +14,7 @@ Security fixes are prioritized for the latest release line on main.
 Please do not open a public GitHub issue for security vulnerabilities.
 
 Report security issues privately to:
-- Email: security@obsura.dev
+- Email: security@obsura.one
 
 Include the following details:
 - Affected component and version/commit.
