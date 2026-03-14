@@ -84,7 +84,7 @@ export default function App() {
           <footer className="pt-6 pb-2">
             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
               <p className="text-[11px] text-stone-400">
-                &copy; 2026 Obsura Project. Released under the Apache-2.0 License.
+                &copy; 2026 Obsura Project. Created with &hearts; by <a href="https://github.com/elqabasy" target="_blank">0xQ4B4S</a>.
               </p>
               <div className="flex items-center gap-6">
                 <a href="#" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors">Privacy Policy</a>

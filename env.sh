@@ -1,11 +1,9 @@
 #!/bin/sh
 
-# Recreate config file
-rm -rf /usr/share/nginx/html/env-config.js
-touch /usr/share/nginx/html/env-config.js
-
-# Add assignment
-echo "window._env_ = {" >> /usr/share/nginx/html/env-config.js
+# Overwrite config file directly (using > truncates and writes).
+# We avoid using 'rm' because unprivileged users (nginx) cannot 
+# remove files in root-owned directories, causing appending bugs.
+echo "window._env_ = {" > /usr/share/nginx/html/env-config.js
 
 # Add VITE_ variables to the window._env_ object safely
 # If the variable exists, write it out
@@ -15,5 +13,4 @@ fi
 
 echo "};" >> /usr/share/nginx/html/env-config.js
 
-# Execute requested CMD/EntryPoint
 exec "$@"
