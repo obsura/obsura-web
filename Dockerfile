@@ -28,10 +28,18 @@ RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy only the built assets
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --chown=nginx:nginx --from=builder /app/dist /usr/share/nginx/html
+
+# Add shell entrypoint for runtime env substitution
+COPY --chown=nginx:nginx env.sh /docker-entrypoint.d/99-env-config.sh
+USER root
+RUN chmod +x /docker-entrypoint.d/99-env-config.sh
 
 # Unprivileged Nginx listens on 8080
 EXPOSE 8080
+
+# Drop back to unprivileged user
+USER nginx
 
 # Run Nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
