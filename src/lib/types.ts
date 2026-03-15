@@ -115,3 +115,177 @@ export interface ApiError {
   code?: string;
   details?: any;
 }
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+export interface PaginationMeta {
+  page: number;
+  page_size: number;
+  total_items: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+}
+
+export interface PagedResponse<T> {
+  data: T[];
+  pagination: PaginationMeta;
+}
+
+// ── Studio – shared primitives ────────────────────────────────────────────────
+
+export type MatcherKind = "regex" | "exact" | "list" | "spacy" | "deny_list";
+
+export type TransformationMode =
+  | "generic"
+  | "semantic"
+  | "mask"
+  | "partial_mask"
+  | "stable_alias"
+  | "custom"
+  | "blur"
+  | "pixelate"
+  | "overlay";
+
+export interface TransformationRule {
+  mode?: TransformationMode;
+  placeholder?: string;
+  semantic_label?: string;
+  alias_prefix?: string;
+  prefix_visible?: number;
+  suffix_visible?: number;
+  mask_character?: string;
+  blur_radius?: number;
+  overlay_color?: string;
+  overlay_label?: string;
+}
+
+export interface PatternMatcherDefinition {
+  kind: MatcherKind;
+  value?: string | null;
+  values?: string[];
+  case_sensitive?: boolean;
+}
+
+// ── Studio – Patterns ─────────────────────────────────────────────────────────
+
+export interface PatternCreate {
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  tags?: string[];
+  is_active?: boolean;
+  matcher: PatternMatcherDefinition;
+  transformation?: TransformationRule | null;
+}
+
+export interface PatternRead extends PatternCreate {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type PatternUpdate = Partial<PatternCreate>;
+
+// ── Studio – Custom Entities ──────────────────────────────────────────────────
+
+export interface CustomEntityCreate {
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  tags?: string[];
+  is_active?: boolean;
+  detection_definitions?: PatternMatcherDefinition[];
+  transformation?: TransformationRule | null;
+}
+
+export interface CustomEntityRead extends CustomEntityCreate {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CustomEntityUpdate = Partial<CustomEntityCreate>;
+
+// ── Studio – Configurations ───────────────────────────────────────────────────
+
+export type ConfigurationKind = "pack" | "profile" | "preset";
+
+export interface ConfigurationCreate {
+  kind: ConfigurationKind;
+  name: string;
+  description?: string | null;
+  category?: string | null;
+  tags?: string[];
+  is_active?: boolean;
+  pattern_ids?: string[];
+  custom_entity_ids?: string[];
+  default_text_transformation?: TransformationRule | null;
+  default_image_transformation?: TransformationRule | null;
+}
+
+export interface ConfigurationRead extends ConfigurationCreate {
+  id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type ConfigurationUpdate = Partial<ConfigurationCreate>;
+
+// ── Jobs ──────────────────────────────────────────────────────────────────────
+
+export type JobStatus = "pending" | "analyzed" | "reviewing" | "reviewed" | "transformed" | "failed";
+export type ContentType = "text" | "image" | "csv" | "document" | "structured";
+export type FindingSource = "builtin" | "pattern" | "entity" | "manual";
+export type FindingKind = "text" | "image_region";
+export type ReviewDecision = "pending" | "approved" | "rejected";
+
+export interface FindingRecord {
+  id?: string | null;
+  job_id?: string | null;
+  source: FindingSource;
+  kind: FindingKind;
+  entity_type: string;
+  entity_name?: string | null;
+  start_index?: number | null;
+  end_index?: number | null;
+  original_preview?: string | null;
+  output_value?: string | null;
+  score?: number | null;
+  review_decision?: ReviewDecision;
+}
+
+export interface JobOutputRecord {
+  id: string;
+  created_at: string;
+  output_type: string;
+  media_url?: string | null;
+  text_preview?: string | null;
+}
+
+export interface JobRead {
+  id: string;
+  created_at: string;
+  updated_at: string;
+  title?: string | null;
+  status: JobStatus;
+  content_type: ContentType;
+  source_text?: string | null;
+  source_file_path?: string | null;
+  pattern_ids: string[];
+  custom_entity_ids: string[];
+  configuration_ids: string[];
+  summary: Record<string, number>;
+  findings: FindingRecord[];
+  outputs: JobOutputRecord[];
+}
+
+export interface JobReviewDecisionInput {
+  finding_id: string;
+  decision: ReviewDecision;
+  override_value?: string | null;
+}
+
+export interface JobReviewRequest {
+  decisions: JobReviewDecisionInput[];
+}
