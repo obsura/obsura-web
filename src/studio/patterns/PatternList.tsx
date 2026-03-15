@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import { FlaskConical, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { PatternRead } from "../../lib/types";
@@ -29,6 +30,7 @@ function matcherKindColor(kind: string) {
 }
 
 export default function PatternList() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [patterns, setPatterns] = React.useState<PatternRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -67,6 +69,22 @@ export default function PatternList() {
     return () => controller.abort();
   }, [loadPatterns]);
 
+  const openFromQuery = searchParams.get("open");
+
+  React.useEffect(() => {
+    if (!openFromQuery) return;
+    setEditorMode("edit");
+    setActivePatternId(openFromQuery);
+    setEditorOpen(true);
+  }, [openFromQuery]);
+
+  const clearOpenQuery = React.useCallback(() => {
+    if (!openFromQuery) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("open");
+    setSearchParams(next, { replace: true });
+  }, [openFromQuery, searchParams, setSearchParams]);
+
   const handleCreate = React.useCallback(() => {
     setEditorMode("create");
     setActivePatternId(null);
@@ -82,8 +100,9 @@ export default function PatternList() {
   const handleSaved = React.useCallback(async () => {
     setEditorOpen(false);
     setActivePatternId(null);
+    clearOpenQuery();
     await loadPatterns(undefined, true);
-  }, [loadPatterns]);
+  }, [clearOpenQuery, loadPatterns]);
 
   return (
     <>
@@ -215,6 +234,7 @@ export default function PatternList() {
         onClose={() => {
           setEditorOpen(false);
           setActivePatternId(null);
+          clearOpenQuery();
         }}
         onSaved={handleSaved}
       />

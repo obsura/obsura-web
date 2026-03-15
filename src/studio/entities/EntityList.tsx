@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import { Building2, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { CustomEntityRead } from "../../lib/types";
@@ -7,6 +8,7 @@ import { cn } from "../../lib/utils";
 import EntityEditorSheet from "./EntityEditorSheet";
 
 export default function EntityList() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [entities, setEntities] = React.useState<CustomEntityRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -45,6 +47,22 @@ export default function EntityList() {
     return () => controller.abort();
   }, [loadEntities]);
 
+  const openFromQuery = searchParams.get("open");
+
+  React.useEffect(() => {
+    if (!openFromQuery) return;
+    setEditorMode("edit");
+    setActiveEntityId(openFromQuery);
+    setEditorOpen(true);
+  }, [openFromQuery]);
+
+  const clearOpenQuery = React.useCallback(() => {
+    if (!openFromQuery) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("open");
+    setSearchParams(next, { replace: true });
+  }, [openFromQuery, searchParams, setSearchParams]);
+
   const openCreate = React.useCallback(() => {
     setEditorMode("create");
     setActiveEntityId(null);
@@ -60,8 +78,9 @@ export default function EntityList() {
   const onSaved = React.useCallback(async () => {
     setEditorOpen(false);
     setActiveEntityId(null);
+    clearOpenQuery();
     await loadEntities(undefined, true);
-  }, [loadEntities]);
+  }, [clearOpenQuery, loadEntities]);
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
@@ -182,6 +201,7 @@ export default function EntityList() {
         onClose={() => {
           setEditorOpen(false);
           setActiveEntityId(null);
+          clearOpenQuery();
         }}
         onSaved={onSaved}
       />
