@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button, Card, Badge } from "../common/UI";
+import { Button, Card, Checkbox, FieldLabel, Input, Select } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -206,11 +206,10 @@ export const TextMode = () => {
 
         <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto">
           <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={redactOnInput}
               onChange={(e) => setRedactOnInput(e.target.checked)}
-              className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-1 transition-all"
+              className="focus:ring-offset-1 transition-all"
             />
             <span className="text-xs font-medium text-stone-500 group-hover:text-stone-700 transition-colors">Redact on input</span>
           </label>
@@ -234,22 +233,18 @@ export const TextMode = () => {
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Detection</h4>
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={applyBuiltins}
                   onChange={(e) => setApplyBuiltins(e.target.checked)}
-                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                 />
                 <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Use built-in detectors</span>
               </label>
               <div className="space-y-1.5 mt-2">
-                <label className="text-xs font-medium text-stone-600">Exact values to redact</label>
-                <input
-                  type="text"
+                <FieldLabel>Exact values to redact</FieldLabel>
+                <Input
                   placeholder="Comma separated..."
                   value={exactValues}
                   onChange={(e) => setExactValues(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow"
                 />
               </div>
             </div>
@@ -257,25 +252,22 @@ export const TextMode = () => {
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-600">Mode</label>
-                <select
+                <FieldLabel>Mode</FieldLabel>
+                <Select
                   value={transformationMode}
                   onChange={(e) => setTransformationMode(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 >
                   <option value="semantic">Semantic Label</option>
                   <option value="mask">Full Mask</option>
                   <option value="partial_mask">Partial Mask</option>
                   <option value="stable_alias">Stable Alias</option>
-                </select>
+                </Select>
               </div>
               <div className="space-y-1.5 mt-2">
-                <label className="text-xs font-medium text-stone-600">Placeholder Label</label>
-                <input
-                  type="text"
+                <FieldLabel>Placeholder Label</FieldLabel>
+                <Input
                   value={placeholderLabel}
                   onChange={(e) => setPlaceholderLabel(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 />
               </div>
             </div>
@@ -283,19 +275,15 @@ export const TextMode = () => {
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Persistence</h4>
               <label className="flex items-center gap-3 cursor-pointer group">
-                <input
-                  type="checkbox"
+                <Checkbox
                   checked={persistJob}
                   onChange={(e) => setPersistJob(e.target.checked)}
-                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                 />
                 <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Persist job metadata</span>
               </label>
               <label className="flex items-center gap-3 cursor-pointer group opacity-50">
-                <input
-                  type="checkbox"
+                <Checkbox
                   disabled
-                  className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 <span className="text-sm text-stone-500 line-through decoration-stone-300">Persist source content</span>
               </label>

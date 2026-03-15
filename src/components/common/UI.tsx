@@ -93,3 +93,64 @@ export const ThemeToggleButton = React.forwardRef<HTMLButtonElement, ThemeToggle
     );
   }
 );
+
+export const FieldLabel = ({ className, children, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) => (
+  <label className={cn("text-xs font-medium text-stone-600", className)} {...props}>
+    {children}
+  </label>
+);
+
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(({ className, ...props }, ref) => (
+  <input
+    ref={ref}
+    className={cn(
+      "w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow",
+      className
+    )}
+    {...props}
+  />
+));
+
+interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {}
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(({ className, ...props }, ref) => (
+  <textarea
+    ref={ref}
+    className={cn(
+      "w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 placeholder:text-stone-400 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow",
+      className
+    )}
+    {...props}
+  />
+));
+
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
+
+export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(({ className, children, ...props }, ref) => (
+  <select
+    ref={ref}
+    className={cn(
+      "w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white text-stone-900 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow",
+      className
+    )}
+    {...props}
+  >
+    {children}
+  </select>
+));
+
+interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> {}
+
+export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(({ className, ...props }, ref) => (
+  <input
+    ref={ref}
+    type="checkbox"
+    className={cn(
+      "w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors",
+      className
+    )}
+    {...props}
+  />
+));

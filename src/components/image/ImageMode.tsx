@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge } from "../common/UI";
+import { Button, Card, Badge, Checkbox, FieldLabel, Select, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -591,11 +591,10 @@ export const ImageMode = () => {
 
         <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto mt-4 sm:mt-0 gap-6">
           <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={autoProcess}
               onChange={(e) => setAutoProcess(e.target.checked)}
-              className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-1 transition-all"
+              className="focus:ring-offset-1 transition-all"
             />
             <span className="text-xs font-medium text-stone-500 group-hover:text-stone-700 transition-colors">Auto-redact on upload</span>
           </label>
@@ -620,20 +619,16 @@ export const ImageMode = () => {
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Detection</h4>
               <div className="space-y-3">
                 <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={detectText}
                     onChange={(e) => setDetectText(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                   />
                   <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Detect text regions</span>
                 </label>
                 <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     checked={detectFaces}
                     onChange={(e) => setDetectFaces(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
                   />
                   <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Detect faces</span>
                 </label>
@@ -643,21 +638,20 @@ export const ImageMode = () => {
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-600">Mode</label>
-                <select
+                <FieldLabel>Mode</FieldLabel>
+                <Select
                   value={transformMode}
                   onChange={(e) => setTransformMode(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 >
                   <option value="mask">Solid Mask</option>
                   <option value="blur">Blur</option>
                   <option value="pixelate">Pixelate</option>
                   <option value="overlay">Overlay Label</option>
-                </select>
+                </Select>
               </div>
               {transformMode === "blur" && (
                 <div className="space-y-1.5 mt-2">
-                  <label className="text-xs font-medium text-stone-600">Blur Radius: {blurRadius}px</label>
+                  <FieldLabel>Blur Radius: {blurRadius}px</FieldLabel>
                   <input
                     type="range"
                     min="5"
@@ -673,10 +667,10 @@ export const ImageMode = () => {
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Manual Regions</h4>
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-600">Regions JSON (Advanced)</label>
-                <textarea
+                <FieldLabel>Regions JSON (Advanced)</FieldLabel>
+                <Textarea
                   placeholder='[{"x": 10, "y": 10, "w": 100, "h": 50}]'
-                  className="w-full h-24 px-3 py-2 text-xs font-mono rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-shadow"
+                  className="h-24 text-xs font-mono resize-none"
                 />
               </div>
             </div>
