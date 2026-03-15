@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button, Card, Checkbox, FormField, Input, Select } from "../common/UI";
+import { Button, Card, Checkbox, FormField, Input, PanelHeader, Select } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -82,9 +82,11 @@ export const TextMode = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Column */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900" id="original-text-label">Original text</h3>
-            <div className="flex items-center gap-2">
+          <PanelHeader
+            title="Original text"
+            titleId="original-text-label"
+            actions={
+              <>
               <Button variant="ghost" size="sm" onClick={handlePaste} aria-label="Paste from clipboard">
                 <ClipboardPaste className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Paste
@@ -93,8 +95,9 @@ export const TextMode = () => {
                 <Trash2 className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Clear
               </Button>
-            </div>
-          </div>
+              </>
+            }
+          />
           <Card className="relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 transition-shadow">
             <textarea
               aria-labelledby="original-text-label"
@@ -114,9 +117,11 @@ export const TextMode = () => {
 
         {/* Output Column */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900" id="redacted-result-label">Redacted result</h3>
-            <div className="flex items-center gap-2">
+          <PanelHeader
+            title="Redacted result"
+            titleId="redacted-result-label"
+            actions={
+              <>
               <Button
                 variant="ghost"
                 size="sm"
@@ -137,8 +142,9 @@ export const TextMode = () => {
                 <Download className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Download
               </Button>
-            </div>
-          </div>
+              </>
+            }
+          />
           <Card className="bg-stone-50/50">
             <div 
               className="w-full h-[360px] p-5 text-sm leading-relaxed font-mono overflow-auto whitespace-pre-wrap text-stone-800"

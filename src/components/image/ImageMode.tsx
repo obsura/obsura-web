@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge, Checkbox, FormField, Select, Textarea } from "../common/UI";
+import { Button, Card, Badge, Checkbox, FormField, PanelHeader, Select, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -329,9 +329,11 @@ export const ImageMode = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Column */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900" id="original-image-label">Original image</h3>
-            <div className="flex gap-2">
+          <PanelHeader
+            title="Original image"
+            titleId="original-image-label"
+            actions={
+              <>
               <Button variant="ghost" size="sm" onClick={handleScreenCapture} aria-label="Capture screen">
                 <Monitor className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Capture
@@ -348,8 +350,9 @@ export const ImageMode = () => {
                   </Button>
                 </>
               )}
-            </div>
-          </div>
+              </>
+            }
+          />
           <Card
             className={`relative h-[360px] flex flex-col items-center justify-center transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 ${
               !file ? "border-dashed bg-stone-50/50 hover:bg-stone-100/50 cursor-pointer" : ""
@@ -409,9 +412,11 @@ export const ImageMode = () => {
 
         {/* Output Column */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900" id="redacted-image-label">Redacted output</h3>
-            <div className="flex items-center gap-2">
+          <PanelHeader
+            title="Redacted output"
+            titleId="redacted-image-label"
+            actions={
+              <>
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -477,8 +482,9 @@ export const ImageMode = () => {
                   </span>
                 </Button>
               )}
-            </div>
-          </div>
+              </>
+            }
+          />
           <Card 
             className="bg-stone-50/50 h-[360px] flex items-center justify-center relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1"
             role="region"

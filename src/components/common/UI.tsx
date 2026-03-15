@@ -209,3 +209,20 @@ export const SegmentedControl = <T extends string>({ value, options, onChange, c
     </div>
   );
 };
+
+interface PanelHeaderProps {
+  title: React.ReactNode;
+  titleId?: string;
+  actions?: React.ReactNode;
+  className?: string;
+  titleClassName?: string;
+}
+
+export const PanelHeader = ({ title, titleId, actions, className, titleClassName }: PanelHeaderProps) => (
+  <div className={cn("flex items-center justify-between", className)}>
+    <h3 id={titleId} className={cn("text-sm font-semibold text-stone-900", titleClassName)}>
+      {title}
+    </h3>
+    {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
+  </div>
+);
