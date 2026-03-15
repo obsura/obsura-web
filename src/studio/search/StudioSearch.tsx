@@ -4,6 +4,9 @@ import { Link } from "react-router-dom";
 import { api } from "../../lib/api";
 import { Button, Card, Input, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
+import PaginationBar from "../common/PaginationBar";
+
+const PAGE_SIZE = 20;
 
 type SearchRecord = Record<string, unknown>;
 
@@ -76,24 +79,32 @@ export default function StudioSearch() {
   const [query, setQuery] = React.useState("");
   const [submittedQuery, setSubmittedQuery] = React.useState("");
   const [results, setResults] = React.useState<ParsedResult[]>([]);
+  const [page, setPage] = React.useState(1);
+  const [totalItems, setTotalItems] = React.useState(0);
+  const [totalPages, setTotalPages] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  async function runSearch(value: string) {
+  async function runSearch(value: string, targetPage = 1) {
     const q = value.trim();
     if (!q) return;
 
     setLoading(true);
     setError(null);
     setSubmittedQuery(q);
+    setPage(targetPage);
 
     try {
-      const response = await api.studioSearch(q);
+      const response = await api.studioSearch(q, { page: targetPage, page_size: PAGE_SIZE });
       const rows = Array.isArray(response.data) ? response.data : [];
       setResults(rows.map((item, i) => parseResult(item as SearchRecord, i)));
+      setTotalItems(response.pagination.total_items);
+      setTotalPages(response.pagination.total_pages);
     } catch (err) {
       setError((err as Error).message);
       setResults([]);
+      setTotalItems(0);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -101,7 +112,7 @@ export default function StudioSearch() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    runSearch(query);
+    runSearch(query, 1);
   }
 
   return (
@@ -132,7 +143,7 @@ export default function StudioSearch() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => runSearch(submittedQuery)}
+                onClick={() => runSearch(submittedQuery, page)}
                 disabled={loading}
               >
                 <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", loading && "animate-spin")} />
@@ -178,7 +189,7 @@ export default function StudioSearch() {
         {!error && results.length > 0 && (
           <div>
             <p className="mb-3 text-sm text-stone-500">
-              {results.length} result{results.length !== 1 ? "s" : ""} for <span className="font-medium text-stone-700">{submittedQuery}</span>
+              {totalItems} result{totalItems !== 1 ? "s" : ""} for <span className="font-medium text-stone-700">{submittedQuery}</span>
             </p>
             <div className="space-y-2">
               {results.map((result) => (
@@ -209,6 +220,15 @@ export default function StudioSearch() {
                 </Card>
               ))}
             </div>
+
+            <PaginationBar
+              page={page}
+              pageSize={PAGE_SIZE}
+              totalItems={totalItems}
+              totalPages={totalPages}
+              disabled={loading}
+              onPageChange={(nextPage) => runSearch(submittedQuery, nextPage)}
+            />
           </div>
         )}
       </div>

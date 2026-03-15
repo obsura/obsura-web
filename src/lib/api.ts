@@ -317,9 +317,15 @@ export const api = {
 
   async studioSearch(
     q: string,
+    params?: { page?: number; page_size?: number },
     signal?: AbortSignal,
   ): Promise<PagedResponse<any>> {
-    return apiFetchPaged(`/studio/search?q=${encodeURIComponent(q)}`, {
+    const qs = new URLSearchParams();
+    qs.set("q", q);
+    if (params?.page) qs.set("page", String(params.page));
+    const pageSize = normalizePageSize(params?.page_size);
+    if (pageSize !== undefined) qs.set("page_size", String(pageSize));
+    return apiFetchPaged(`/studio/search?${qs.toString()}`, {
       signal,
     });
   },

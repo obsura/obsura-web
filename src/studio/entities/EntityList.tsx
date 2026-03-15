@@ -6,6 +6,9 @@ import type { CustomEntityRead } from "../../lib/types";
 import { Card, Button, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import EntityEditorSheet from "./EntityEditorSheet";
+import PaginationBar from "../common/PaginationBar";
+
+const PAGE_SIZE = 50;
 
 export default function EntityList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -14,6 +17,8 @@ export default function EntityList() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activeEntityId, setActiveEntityId] = React.useState<string | null>(null);
@@ -28,9 +33,10 @@ export default function EntityList() {
     setError(null);
 
     try {
-      const { data, pagination } = await api.listEntities({ page: 1, page_size: 50 }, signal);
+      const { data, pagination } = await api.listEntities({ page, page_size: PAGE_SIZE }, signal);
       setEntities(data);
       setTotal(pagination.total_items);
+      setTotalPages(pagination.total_pages);
     } catch (err) {
       if (!(err instanceof Error) || err.name !== "AbortError") {
         setError(err instanceof Error ? err.message : "Failed to load entities.");
@@ -39,7 +45,7 @@ export default function EntityList() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [page]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -147,8 +153,9 @@ export default function EntityList() {
       )}
 
       {!loading && !error && entities.length > 0 && (
-        <div className="space-y-2">
-          {entities.map((entity) => (
+        <>
+          <div className="space-y-2">
+            {entities.map((entity) => (
             <Card
               key={entity.id}
               className={cn(
@@ -190,8 +197,18 @@ export default function EntityList() {
                 </Button>
               </div>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <PaginationBar
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalItems={total}
+            totalPages={totalPages}
+            disabled={loading || refreshing}
+            onPageChange={(nextPage) => setPage(nextPage)}
+          />
+        </>
       )}
 
       <EntityEditorSheet
