@@ -30,6 +30,14 @@ import {
 import { env, joinUrl } from "./env";
 import { handleApiError } from "./errors";
 
+const API_MAX_PAGE_SIZE = 100;
+
+function normalizePageSize(pageSize?: number): number | undefined {
+  if (pageSize === undefined) return undefined;
+  if (!Number.isFinite(pageSize)) return API_MAX_PAGE_SIZE;
+  return Math.max(1, Math.min(API_MAX_PAGE_SIZE, Math.floor(pageSize)));
+}
+
 // Helper function to centralize frontend fetch logic and CORS/Header configs
 async function apiFetch<T>(
   endpoint: string,
@@ -154,7 +162,8 @@ export const api = {
   ): Promise<PagedResponse<PatternRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
-    if (params?.page_size) qs.set("page_size", String(params.page_size));
+    const pageSize = normalizePageSize(params?.page_size);
+    if (pageSize !== undefined) qs.set("page_size", String(pageSize));
     return apiFetchPaged<PatternRead>(`/studio/patterns?${qs}`, { signal });
   },
 
@@ -193,7 +202,8 @@ export const api = {
   ): Promise<PagedResponse<CustomEntityRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
-    if (params?.page_size) qs.set("page_size", String(params.page_size));
+    const pageSize = normalizePageSize(params?.page_size);
+    if (pageSize !== undefined) qs.set("page_size", String(pageSize));
     return apiFetchPaged<CustomEntityRead>(`/studio/entities?${qs}`, {
       signal,
     });
@@ -234,7 +244,8 @@ export const api = {
   ): Promise<PagedResponse<ConfigurationRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
-    if (params?.page_size) qs.set("page_size", String(params.page_size));
+    const pageSize = normalizePageSize(params?.page_size);
+    if (pageSize !== undefined) qs.set("page_size", String(pageSize));
     return apiFetchPaged<ConfigurationRead>(`/studio/configurations?${qs}`, {
       signal,
     });
@@ -280,7 +291,8 @@ export const api = {
   ): Promise<PagedResponse<JobRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
-    if (params?.page_size) qs.set("page_size", String(params.page_size));
+    const pageSize = normalizePageSize(params?.page_size);
+    if (pageSize !== undefined) qs.set("page_size", String(pageSize));
     if (params?.content_type) qs.set("content_type", params.content_type);
     return apiFetchPaged<JobRead>(`/jobs?${qs}`, { signal });
   },
