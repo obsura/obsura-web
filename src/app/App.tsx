@@ -63,8 +63,8 @@ export default function App() {
         <Route path="/workbench/*" element={<WorkbenchLayout isDark={isDark} onToggleTheme={toggleTheme} />} />
         <Route path="/quick-redact" element={<QuickRedactPage isDark={isDark} onToggleTheme={toggleTheme} />} />
         <Route path="/studio/*" element={<StudioLayout isDark={isDark} onToggleTheme={toggleTheme} />} />
-        <Route path="/" element={<Navigate to="/workbench" replace />} />
-        <Route path="*" element={<Navigate to="/workbench" replace />} />
+        <Route path="/" element={<Navigate to="/quick-redact?mode=text" replace />} />
+        <Route path="*" element={<Navigate to="/quick-redact?mode=text" replace />} />
       </Routes>
     </Suspense>
   );
