@@ -11,6 +11,7 @@ import PaginationBar from "../common/PaginationBar";
 const PAGE_SIZE = 50;
 type ActiveFilter = "all" | "active" | "inactive";
 type KindFilter = "all" | ConfigurationKind;
+type SortFilter = "newest" | "oldest" | "name_asc" | "name_desc";
 
 function kindLabel(kind: ConfigurationKind) {
   return { pack: "Pack", profile: "Profile", preset: "Preset" }[kind] ?? kind;
@@ -30,6 +31,7 @@ export default function ConfigList() {
   const queryParam = searchParams.get("q") ?? "";
   const activeParam = (searchParams.get("active") as ActiveFilter) ?? "all";
   const kindParam = (searchParams.get("kind") as KindFilter) ?? "all";
+  const sortParam = (searchParams.get("sort") as SortFilter) ?? "newest";
   const [configs, setConfigs] = React.useState<ConfigurationRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -40,6 +42,7 @@ export default function ConfigList() {
   const [query, setQuery] = React.useState(queryParam);
   const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>(activeParam);
   const [kindFilter, setKindFilter] = React.useState<KindFilter>(kindParam);
+  const [sortFilter, setSortFilter] = React.useState<SortFilter>(sortParam);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activeConfigId, setActiveConfigId] = React.useState<string | null>(null);
@@ -88,7 +91,10 @@ export default function ConfigList() {
 
     const nextKind = (searchParams.get("kind") as KindFilter) ?? "all";
     if (nextKind !== kindFilter) setKindFilter(nextKind);
-  }, [activeFilter, kindFilter, page, query, searchParams]);
+
+    const nextSort = (searchParams.get("sort") as SortFilter) ?? "newest";
+    if (nextSort !== sortFilter) setSortFilter(nextSort);
+  }, [activeFilter, kindFilter, page, query, searchParams, sortFilter]);
 
   React.useEffect(() => {
     if (!openFromQuery) return;
@@ -116,7 +122,7 @@ export default function ConfigList() {
   );
 
   const updateFiltersInQuery = React.useCallback(
-    (next: { q?: string; active?: ActiveFilter; kind?: KindFilter }) => {
+    (next: { q?: string; active?: ActiveFilter; kind?: KindFilter; sort?: SortFilter }) => {
       const params = new URLSearchParams(searchParams);
       params.set("page", "1");
 
@@ -132,18 +138,23 @@ export default function ConfigList() {
       if (nextKind === "all") params.delete("kind");
       else params.set("kind", nextKind);
 
+      const nextSort = next.sort ?? sortFilter;
+      if (nextSort === "newest") params.delete("sort");
+      else params.set("sort", nextSort);
+
       setSearchParams(params, { replace: true });
       setPage(1);
       setQuery(nextQ);
       setActiveFilter(nextActive);
       setKindFilter(nextKind);
+      setSortFilter(nextSort);
     },
-    [activeFilter, kindFilter, query, searchParams, setSearchParams]
+    [activeFilter, kindFilter, query, searchParams, setSearchParams, sortFilter]
   );
 
   const visibleConfigs = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return configs.filter((config) => {
+    const filtered = configs.filter((config) => {
       if (activeFilter === "active" && !config.is_active) return false;
       if (activeFilter === "inactive" && config.is_active) return false;
       if (kindFilter !== "all" && config.kind !== kindFilter) return false;
@@ -160,7 +171,16 @@ export default function ConfigList() {
 
       return haystack.includes(q);
     });
-  }, [activeFilter, configs, kindFilter, query]);
+
+    return [...filtered].sort((a, b) => {
+      if (sortFilter === "name_asc") return a.name.localeCompare(b.name);
+      if (sortFilter === "name_desc") return b.name.localeCompare(a.name);
+      const av = new Date(a.created_at).getTime();
+      const bv = new Date(b.created_at).getTime();
+      if (sortFilter === "oldest") return av - bv;
+      return bv - av;
+    });
+  }, [activeFilter, configs, kindFilter, query, sortFilter]);
 
   const openCreate = React.useCallback(() => {
     setEditorMode("create");
@@ -209,7 +229,7 @@ export default function ConfigList() {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
         <Input
           value={query}
           onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
@@ -231,6 +251,15 @@ export default function ConfigList() {
           <option value="all">All states</option>
           <option value="active">Active only</option>
           <option value="inactive">Inactive only</option>
+        </Select>
+        <Select
+          value={sortFilter}
+          onChange={(e) => updateFiltersInQuery({ sort: e.target.value as SortFilter })}
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name_asc">Name A-Z</option>
+          <option value="name_desc">Name Z-A</option>
         </Select>
         <div className="flex items-center text-xs text-stone-500">
           Showing {visibleConfigs.length} of {configs.length} on this page

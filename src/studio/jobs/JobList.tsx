@@ -22,6 +22,7 @@ import PaginationBar from "../common/PaginationBar";
 const PAGE_SIZE = 50;
 type ContentFilter = "all" | "text" | "image" | "csv" | "document" | "structured";
 type StatusFilter = "all" | JobStatus;
+type SortFilter = "newest" | "oldest" | "findings_desc" | "status_asc";
 
 function statusConfig(status: JobStatus) {
   switch (status) {
@@ -52,6 +53,7 @@ export default function JobList() {
   const queryParam = searchParams.get("q") ?? "";
   const contentParam = (searchParams.get("content") as ContentFilter) ?? "all";
   const statusParam = (searchParams.get("status") as StatusFilter) ?? "all";
+  const sortParam = (searchParams.get("sort") as SortFilter) ?? "newest";
   const [jobs, setJobs] = React.useState<JobRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -62,6 +64,7 @@ export default function JobList() {
   const [query, setQuery] = React.useState(queryParam);
   const [contentFilter, setContentFilter] = React.useState<ContentFilter>(contentParam);
   const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(statusParam);
+  const [sortFilter, setSortFilter] = React.useState<SortFilter>(sortParam);
 
   // Detail sheet state
   const [detailJobId, setDetailJobId] = React.useState<string | null>(null);
@@ -117,7 +120,10 @@ export default function JobList() {
 
     const nextStatus = (searchParams.get("status") as StatusFilter) ?? "all";
     if (nextStatus !== statusFilter) setStatusFilter(nextStatus);
-  }, [contentFilter, page, query, searchParams, statusFilter]);
+
+    const nextSort = (searchParams.get("sort") as SortFilter) ?? "newest";
+    if (nextSort !== sortFilter) setSortFilter(nextSort);
+  }, [contentFilter, page, query, searchParams, sortFilter, statusFilter]);
 
   React.useEffect(() => {
     if (!viewFromQuery) return;
@@ -143,7 +149,7 @@ export default function JobList() {
   );
 
   const updateFiltersInQuery = React.useCallback(
-    (next: { q?: string; content?: ContentFilter; status?: StatusFilter }) => {
+    (next: { q?: string; content?: ContentFilter; status?: StatusFilter; sort?: SortFilter }) => {
       const params = new URLSearchParams(searchParams);
       params.set("page", "1");
 
@@ -159,25 +165,39 @@ export default function JobList() {
       if (nextStatus === "all") params.delete("status");
       else params.set("status", nextStatus);
 
+      const nextSort = next.sort ?? sortFilter;
+      if (nextSort === "newest") params.delete("sort");
+      else params.set("sort", nextSort);
+
       setSearchParams(params, { replace: true });
       setPage(1);
       setQuery(nextQ);
       setContentFilter(nextContent);
       setStatusFilter(nextStatus);
+      setSortFilter(nextSort);
     },
-    [contentFilter, query, searchParams, setSearchParams, statusFilter]
+    [contentFilter, query, searchParams, setSearchParams, sortFilter, statusFilter]
   );
 
   const visibleJobs = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return jobs.filter((job) => {
+    const filtered = jobs.filter((job) => {
       if (statusFilter !== "all" && job.status !== statusFilter) return false;
       if (!q) return true;
 
       const haystack = [job.title ?? "", job.id, job.status, job.content_type].join(" ").toLowerCase();
       return haystack.includes(q);
     });
-  }, [jobs, query, statusFilter]);
+
+    return [...filtered].sort((a, b) => {
+      if (sortFilter === "status_asc") return a.status.localeCompare(b.status);
+      if (sortFilter === "findings_desc") return (b.findings?.length ?? 0) - (a.findings?.length ?? 0);
+      const av = new Date(a.created_at).getTime();
+      const bv = new Date(b.created_at).getTime();
+      if (sortFilter === "oldest") return av - bv;
+      return bv - av;
+    });
+  }, [jobs, query, sortFilter, statusFilter]);
 
   function handleRefresh() {
     loadJobs(undefined, true);
@@ -226,7 +246,7 @@ export default function JobList() {
         </Button>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-5">
         <Input
           value={query}
           onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
@@ -254,6 +274,15 @@ export default function JobList() {
           <option value="reviewed">Reviewed</option>
           <option value="transformed">Done</option>
           <option value="failed">Failed</option>
+        </Select>
+        <Select
+          value={sortFilter}
+          onChange={(e) => updateFiltersInQuery({ sort: e.target.value as SortFilter })}
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="findings_desc">Most findings</option>
+          <option value="status_asc">Status A-Z</option>
         </Select>
         <div className="flex items-center text-xs text-stone-500">
           Showing {visibleJobs.length} of {jobs.length} on this page

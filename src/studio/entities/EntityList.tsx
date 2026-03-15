@@ -10,6 +10,7 @@ import PaginationBar from "../common/PaginationBar";
 
 const PAGE_SIZE = 50;
 type ActiveFilter = "all" | "active" | "inactive";
+type SortFilter = "newest" | "oldest" | "name_asc" | "name_desc";
 
 export default function EntityList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,6 +18,7 @@ export default function EntityList() {
   const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const queryParam = searchParams.get("q") ?? "";
   const activeParam = (searchParams.get("active") as ActiveFilter) ?? "all";
+  const sortParam = (searchParams.get("sort") as SortFilter) ?? "newest";
 
   const [entities, setEntities] = React.useState<CustomEntityRead[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -27,6 +29,7 @@ export default function EntityList() {
   const [totalPages, setTotalPages] = React.useState(1);
   const [query, setQuery] = React.useState(queryParam);
   const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>(activeParam);
+  const [sortFilter, setSortFilter] = React.useState<SortFilter>(sortParam);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activeEntityId, setActiveEntityId] = React.useState<string | null>(null);
@@ -72,7 +75,10 @@ export default function EntityList() {
 
     const nextActive = (searchParams.get("active") as ActiveFilter) ?? "all";
     if (nextActive !== activeFilter) setActiveFilter(nextActive);
-  }, [activeFilter, page, query, searchParams]);
+
+    const nextSort = (searchParams.get("sort") as SortFilter) ?? "newest";
+    if (nextSort !== sortFilter) setSortFilter(nextSort);
+  }, [activeFilter, page, query, searchParams, sortFilter]);
 
   React.useEffect(() => {
     if (!openFromQuery) return;
@@ -100,7 +106,7 @@ export default function EntityList() {
   );
 
   const updateFiltersInQuery = React.useCallback(
-    (next: { q?: string; active?: ActiveFilter }) => {
+    (next: { q?: string; active?: ActiveFilter; sort?: SortFilter }) => {
       const params = new URLSearchParams(searchParams);
       params.set("page", "1");
 
@@ -112,17 +118,22 @@ export default function EntityList() {
       if (nextActive === "all") params.delete("active");
       else params.set("active", nextActive);
 
+      const nextSort = next.sort ?? sortFilter;
+      if (nextSort === "newest") params.delete("sort");
+      else params.set("sort", nextSort);
+
       setSearchParams(params, { replace: true });
       setPage(1);
       setQuery(nextQ);
       setActiveFilter(nextActive);
+      setSortFilter(nextSort);
     },
-    [activeFilter, query, searchParams, setSearchParams]
+    [activeFilter, query, searchParams, setSearchParams, sortFilter]
   );
 
   const visibleEntities = React.useMemo(() => {
     const q = query.trim().toLowerCase();
-    return entities.filter((entity) => {
+    const filtered = entities.filter((entity) => {
       if (activeFilter === "active" && !entity.is_active) return false;
       if (activeFilter === "inactive" && entity.is_active) return false;
       if (!q) return true;
@@ -137,7 +148,16 @@ export default function EntityList() {
 
       return haystack.includes(q);
     });
-  }, [activeFilter, entities, query]);
+
+    return [...filtered].sort((a, b) => {
+      if (sortFilter === "name_asc") return a.name.localeCompare(b.name);
+      if (sortFilter === "name_desc") return b.name.localeCompare(a.name);
+      const av = new Date(a.created_at).getTime();
+      const bv = new Date(b.created_at).getTime();
+      if (sortFilter === "oldest") return av - bv;
+      return bv - av;
+    });
+  }, [activeFilter, entities, query, sortFilter]);
 
   const openCreate = React.useCallback(() => {
     setEditorMode("create");
@@ -186,7 +206,7 @@ export default function EntityList() {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
         <Input
           value={query}
           onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
@@ -199,6 +219,15 @@ export default function EntityList() {
           <option value="all">All states</option>
           <option value="active">Active only</option>
           <option value="inactive">Inactive only</option>
+        </Select>
+        <Select
+          value={sortFilter}
+          onChange={(e) => updateFiltersInQuery({ sort: e.target.value as SortFilter })}
+        >
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="name_asc">Name A-Z</option>
+          <option value="name_desc">Name Z-A</option>
         </Select>
         <div className="flex items-center text-xs text-stone-500">
           Showing {visibleEntities.length} of {entities.length} on this page
