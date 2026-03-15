@@ -78,7 +78,10 @@ async function apiFetchPaged<T>(
   });
   await handleApiError(res);
   const json = await res.json();
-  return { data: json.data ?? [], pagination: json.pagination } as PagedResponse<T>;
+  return {
+    data: json.data ?? [],
+    pagination: json.pagination,
+  } as PagedResponse<T>;
 }
 
 export const api = {
@@ -145,70 +148,136 @@ export const api = {
 
   // ── Studio – Patterns ───────────────────────────────────────────────────────
 
-  async listPatterns(params?: { page?: number; page_size?: number }, signal?: AbortSignal): Promise<PagedResponse<PatternRead>> {
+  async listPatterns(
+    params?: { page?: number; page_size?: number },
+    signal?: AbortSignal,
+  ): Promise<PagedResponse<PatternRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
     if (params?.page_size) qs.set("page_size", String(params.page_size));
     return apiFetchPaged<PatternRead>(`/studio/patterns?${qs}`, { signal });
   },
 
-  async createPattern(payload: PatternCreate, signal?: AbortSignal): Promise<PatternRead> {
-    return apiFetch<PatternRead>("/studio/patterns", { method: "POST", body: JSON.stringify(payload), signal });
+  async createPattern(
+    payload: PatternCreate,
+    signal?: AbortSignal,
+  ): Promise<PatternRead> {
+    return apiFetch<PatternRead>("/studio/patterns", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   async getPattern(id: string, signal?: AbortSignal): Promise<PatternRead> {
     return apiFetch<PatternRead>(`/studio/patterns/${id}`, { signal });
   },
 
-  async updatePattern(id: string, payload: PatternUpdate, signal?: AbortSignal): Promise<PatternRead> {
-    return apiFetch<PatternRead>(`/studio/patterns/${id}`, { method: "PATCH", body: JSON.stringify(payload), signal });
+  async updatePattern(
+    id: string,
+    payload: PatternUpdate,
+    signal?: AbortSignal,
+  ): Promise<PatternRead> {
+    return apiFetch<PatternRead>(`/studio/patterns/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   // ── Studio – Custom Entities ────────────────────────────────────────────────
 
-  async listEntities(params?: { page?: number; page_size?: number }, signal?: AbortSignal): Promise<PagedResponse<CustomEntityRead>> {
+  async listEntities(
+    params?: { page?: number; page_size?: number },
+    signal?: AbortSignal,
+  ): Promise<PagedResponse<CustomEntityRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
     if (params?.page_size) qs.set("page_size", String(params.page_size));
-    return apiFetchPaged<CustomEntityRead>(`/studio/entities?${qs}`, { signal });
+    return apiFetchPaged<CustomEntityRead>(`/studio/entities?${qs}`, {
+      signal,
+    });
   },
 
-  async createEntity(payload: CustomEntityCreate, signal?: AbortSignal): Promise<CustomEntityRead> {
-    return apiFetch<CustomEntityRead>("/studio/entities", { method: "POST", body: JSON.stringify(payload), signal });
+  async createEntity(
+    payload: CustomEntityCreate,
+    signal?: AbortSignal,
+  ): Promise<CustomEntityRead> {
+    return apiFetch<CustomEntityRead>("/studio/entities", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   async getEntity(id: string, signal?: AbortSignal): Promise<CustomEntityRead> {
     return apiFetch<CustomEntityRead>(`/studio/entities/${id}`, { signal });
   },
 
-  async updateEntity(id: string, payload: CustomEntityUpdate, signal?: AbortSignal): Promise<CustomEntityRead> {
-    return apiFetch<CustomEntityRead>(`/studio/entities/${id}`, { method: "PATCH", body: JSON.stringify(payload), signal });
+  async updateEntity(
+    id: string,
+    payload: CustomEntityUpdate,
+    signal?: AbortSignal,
+  ): Promise<CustomEntityRead> {
+    return apiFetch<CustomEntityRead>(`/studio/entities/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   // ── Studio – Configurations ─────────────────────────────────────────────────
 
-  async listConfigurations(params?: { page?: number; page_size?: number }, signal?: AbortSignal): Promise<PagedResponse<ConfigurationRead>> {
+  async listConfigurations(
+    params?: { page?: number; page_size?: number },
+    signal?: AbortSignal,
+  ): Promise<PagedResponse<ConfigurationRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
     if (params?.page_size) qs.set("page_size", String(params.page_size));
-    return apiFetchPaged<ConfigurationRead>(`/studio/configurations?${qs}`, { signal });
+    return apiFetchPaged<ConfigurationRead>(`/studio/configurations?${qs}`, {
+      signal,
+    });
   },
 
-  async createConfiguration(payload: ConfigurationCreate, signal?: AbortSignal): Promise<ConfigurationRead> {
-    return apiFetch<ConfigurationRead>("/studio/configurations", { method: "POST", body: JSON.stringify(payload), signal });
+  async createConfiguration(
+    payload: ConfigurationCreate,
+    signal?: AbortSignal,
+  ): Promise<ConfigurationRead> {
+    return apiFetch<ConfigurationRead>("/studio/configurations", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
-  async getConfiguration(id: string, signal?: AbortSignal): Promise<ConfigurationRead> {
-    return apiFetch<ConfigurationRead>(`/studio/configurations/${id}`, { signal });
+  async getConfiguration(
+    id: string,
+    signal?: AbortSignal,
+  ): Promise<ConfigurationRead> {
+    return apiFetch<ConfigurationRead>(`/studio/configurations/${id}`, {
+      signal,
+    });
   },
 
-  async updateConfiguration(id: string, payload: ConfigurationUpdate, signal?: AbortSignal): Promise<ConfigurationRead> {
-    return apiFetch<ConfigurationRead>(`/studio/configurations/${id}`, { method: "PATCH", body: JSON.stringify(payload), signal });
+  async updateConfiguration(
+    id: string,
+    payload: ConfigurationUpdate,
+    signal?: AbortSignal,
+  ): Promise<ConfigurationRead> {
+    return apiFetch<ConfigurationRead>(`/studio/configurations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   // ── Jobs ────────────────────────────────────────────────────────────────────
 
-  async listJobs(params?: { page?: number; page_size?: number; content_type?: string }, signal?: AbortSignal): Promise<PagedResponse<JobRead>> {
+  async listJobs(
+    params?: { page?: number; page_size?: number; content_type?: string },
+    signal?: AbortSignal,
+  ): Promise<PagedResponse<JobRead>> {
     const qs = new URLSearchParams();
     if (params?.page) qs.set("page", String(params.page));
     if (params?.page_size) qs.set("page_size", String(params.page_size));
@@ -220,13 +289,26 @@ export const api = {
     return apiFetch<JobRead>(`/jobs/${id}`, { signal });
   },
 
-  async reviewJob(id: string, payload: JobReviewRequest, signal?: AbortSignal): Promise<JobRead> {
-    return apiFetch<JobRead>(`/jobs/${id}/review`, { method: "POST", body: JSON.stringify(payload), signal });
+  async reviewJob(
+    id: string,
+    payload: JobReviewRequest,
+    signal?: AbortSignal,
+  ): Promise<JobRead> {
+    return apiFetch<JobRead>(`/jobs/${id}/review`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   // ── Studio – Search ─────────────────────────────────────────────────────────
 
-  async studioSearch(q: string, signal?: AbortSignal): Promise<PagedResponse<any>> {
-    return apiFetchPaged(`/studio/search?q=${encodeURIComponent(q)}`, { signal });
+  async studioSearch(
+    q: string,
+    signal?: AbortSignal,
+  ): Promise<PagedResponse<any>> {
+    return apiFetchPaged(`/studio/search?q=${encodeURIComponent(q)}`, {
+      signal,
+    });
   },
 };

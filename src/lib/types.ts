@@ -234,7 +234,13 @@ export type ConfigurationUpdate = Partial<ConfigurationCreate>;
 
 // ── Jobs ──────────────────────────────────────────────────────────────────────
 
-export type JobStatus = "pending" | "analyzed" | "reviewing" | "reviewed" | "transformed" | "failed";
+export type JobStatus =
+  | "pending"
+  | "analyzed"
+  | "reviewing"
+  | "reviewed"
+  | "transformed"
+  | "failed";
 export type ContentType = "text" | "image" | "csv" | "document" | "structured";
 export type FindingSource = "builtin" | "pattern" | "entity" | "manual";
 export type FindingKind = "text" | "image_region";
