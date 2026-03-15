@@ -7,8 +7,8 @@ import { Header } from "../components/layout/Header";
 import { TextMode } from "../components/text/TextMode";
 import { ImageMode } from "../components/image/ImageMode";
 import { DeveloperProfile } from "../components/layout/DeveloperProfile";
+import { SegmentedControl } from "../components/common/UI";
 import { RedactionMode } from "../lib/types";
-import { cn } from "../lib/utils";
 import { Type, Image as ImageIcon, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocalStorage } from "../hooks/use-local-storage";
@@ -18,6 +18,13 @@ export default function App() {
   const [mode, setMode] = useLocalStorage<RedactionMode>("obsura_active_mode", "text");
   const [theme, setTheme] = useLocalStorage<"light" | "dark">("obsura_theme", "light");
   const isDark = theme === "dark";
+  const modeOptions = React.useMemo(
+    () => [
+      { value: "text" as const, label: "Text Redaction", icon: <Type className="w-4 h-4" /> },
+      { value: "image" as const, label: "Image Redaction", icon: <ImageIcon className="w-4 h-4" /> },
+    ],
+    []
+  );
 
   React.useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
@@ -45,32 +52,7 @@ export default function App() {
 
           {/* Mode Switcher */}
           <div className="flex justify-center">
-            <div className="inline-flex p-1 bg-stone-200/50 rounded-xl border border-stone-200">
-              <button
-                onClick={() => setMode("text")}
-                className={cn(
-                  "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all",
-                  mode === "text"
-                    ? "bg-white text-stone-900 shadow-sm"
-                    : "text-stone-500 hover:text-stone-700"
-                )}
-              >
-                <Type className="w-4 h-4" />
-                Text Redaction
-              </button>
-              <button
-                onClick={() => setMode("image")}
-                className={cn(
-                  "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all",
-                  mode === "image"
-                    ? "bg-white text-stone-900 shadow-sm"
-                    : "text-stone-500 hover:text-stone-700"
-                )}
-              >
-                <ImageIcon className="w-4 h-4" />
-                Image Redaction
-              </button>
-            </div>
+            <SegmentedControl value={mode} options={modeOptions} onChange={setMode} />
           </div>
 
           {/* Workspace */}

@@ -57,6 +57,8 @@ Defined in src/components/common/UI.tsx:
   - semantic surface container using tokenized styles
 - Badge
   - variants for status and labels
+- SegmentedControl
+  - reusable two-plus option switcher for mode tabs and compact state toggles
 - ThemeToggleButton
   - reusable icon button for dark/light switching
 - FieldLabel

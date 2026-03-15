@@ -170,3 +170,42 @@ export const FormField = ({ label, hint, className, labelClassName, children }: 
     {hint ? <p className="text-[11px] text-stone-500">{hint}</p> : null}
   </div>
 );
+
+interface SegmentedOption<T extends string> {
+  value: T;
+  label: string;
+  icon?: React.ReactNode;
+}
+
+interface SegmentedControlProps<T extends string> {
+  value: T;
+  options: SegmentedOption<T>[];
+  onChange: (value: T) => void;
+  className?: string;
+}
+
+export const SegmentedControl = <T extends string>({ value, options, onChange, className }: SegmentedControlProps<T>) => {
+  return (
+    <div className={cn("inline-flex p-1 bg-stone-200/50 rounded-xl border border-stone-200", className)} role="tablist" aria-orientation="horizontal">
+      {options.map((option) => {
+        const isActive = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => onChange(option.value)}
+            className={cn(
+              "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-semibold transition-all",
+              isActive ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-700"
+            )}
+          >
+            {option.icon}
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+};
