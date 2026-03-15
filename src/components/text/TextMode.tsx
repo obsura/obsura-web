@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button, Card, Checkbox, FormField, Input, MetaPill, PanelHeader, Select, StatusMeta } from "../common/UI";
+import { Button, Card, Checkbox, FormField, Input, MetaPill, PanelHeader, PanelState, Select, StatusMeta } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -153,22 +153,26 @@ export const TextMode = () => {
               tabIndex={0}
             >
               {error ? (
-                <div role="alert" className="h-full flex flex-col items-center justify-center text-red-500 space-y-2">
-                  <AlertCircle className="w-8 h-8 opacity-50" />
-                  <p className="text-xs text-center max-w-sm">{error}</p>
-                </div>
+                <PanelState
+                  role="alert"
+                  tone="error"
+                  icon={<AlertCircle className="w-8 h-8 opacity-50" />}
+                  description={error}
+                />
               ) : isLoading && !output ? (
-                <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-2 animate-pulse">
-                  <RefreshCw className="w-8 h-8 opacity-20 animate-spin" />
-                  <p className="text-xs" aria-live="polite">Analyzing and redacting...</p>
-                </div>
+                <PanelState
+                  animated
+                  icon={<RefreshCw className="w-8 h-8 opacity-20 animate-spin" />}
+                  description="Analyzing and redacting..."
+                  aria-live="polite"
+                />
               ) : output ? (
                 <span aria-live="polite">{output.output_text}</span>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-stone-400 space-y-2">
-                  <RefreshCw className="w-8 h-8 opacity-20" />
-                  <p className="text-xs">Redacted text will appear here</p>
-                </div>
+                <PanelState
+                  icon={<RefreshCw className="w-8 h-8 opacity-20" />}
+                  description="Redacted text will appear here"
+                />
               )}
             </div>
           </Card>

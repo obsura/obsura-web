@@ -258,3 +258,35 @@ export const StatusMeta = ({
     {trailing ? <div className="ml-auto text-[10px] font-mono text-stone-400 select-all">{trailing}</div> : null}
   </div>
 );
+
+type PanelStateProps = React.HTMLAttributes<HTMLDivElement> & {
+  icon?: React.ReactNode;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  tone?: "neutral" | "error";
+  animated?: boolean;
+};
+
+export const PanelState = ({
+  icon,
+  title,
+  description,
+  tone = "neutral",
+  animated = false,
+  className,
+  ...props
+}: PanelStateProps) => (
+  <div
+    className={cn(
+      "h-full flex flex-col items-center justify-center space-y-2 p-4 text-center",
+      tone === "error" ? "text-red-500" : "text-stone-400",
+      animated && "animate-pulse",
+      className
+    )}
+    {...props}
+  >
+    {icon ? <div className="flex items-center justify-center">{icon}</div> : null}
+    {title ? <p className={cn("text-xs font-medium", tone === "error" ? "text-red-500" : "text-stone-600")}>{title}</p> : null}
+    {description ? <p className="text-xs max-w-sm">{description}</p> : null}
+  </div>
+);

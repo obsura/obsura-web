@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge, Checkbox, FormField, MetaPill, PanelHeader, Select, StatusMeta, Textarea } from "../common/UI";
+import { Button, Card, Badge, Checkbox, FormField, MetaPill, PanelHeader, PanelState, Select, StatusMeta, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -103,7 +103,7 @@ export const ImageMode = () => {
       detect_faces: detectFaces,
       default_transformation: {
         mode: transformMode,
-        overlay_color: "#111111",
+        overlay_color: "#000000",
         overlay_label: "REDACTED",
         blur_radius: Number(blurRadius),
       },
@@ -491,15 +491,20 @@ export const ImageMode = () => {
             aria-labelledby="redacted-image-label"
           >
             {error ? (
-              <div role="alert" className="flex flex-col items-center justify-center text-red-500 space-y-2 p-4 text-center">
-                <AlertCircle className="w-8 h-8 opacity-50" />
-                <p className="text-xs max-w-[80%]">{error}</p>
-              </div>
+              <PanelState
+                role="alert"
+                tone="error"
+                icon={<AlertCircle className="w-8 h-8 opacity-50" />}
+                description={error}
+                className="max-w-[80%]"
+              />
             ) : isLoading && !output && !analysis ? (
-              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2 animate-pulse">
-                <RefreshCw className="w-8 h-8 opacity-20 animate-spin" />
-                <p className="text-xs" aria-live="polite">Processing image...</p>
-              </div>
+              <PanelState
+                animated
+                icon={<RefreshCw className="w-8 h-8 opacity-20 animate-spin" />}
+                description="Processing image..."
+                aria-live="polite"
+              />
             ) : output ? (
               <div className="relative w-full h-full flex items-center justify-center overflow-hidden p-4 group">
                 <img
@@ -539,16 +544,16 @@ export const ImageMode = () => {
                 </div>
               </div>
             ) : analysis ? (
-              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2">
-                <ImageIcon className="w-8 h-8 opacity-20" />
-                <p className="text-xs font-medium text-stone-600">Analysis complete</p>
-                <p className="text-xs">Click "Redact image" to apply transformations</p>
-              </div>
+              <PanelState
+                icon={<ImageIcon className="w-8 h-8 opacity-20" />}
+                title="Analysis complete"
+                description={'Click "Redact image" to apply transformations'}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2">
-                <ImageIcon className="w-8 h-8 opacity-20" />
-                <p className="text-xs">Redacted image will appear here</p>
-              </div>
+              <PanelState
+                icon={<ImageIcon className="w-8 h-8 opacity-20" />}
+                description="Redacted image will appear here"
+              />
             )}
           </Card>
           {analysis && !error && (
