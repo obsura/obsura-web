@@ -4,6 +4,9 @@ import { Header, AppFooter } from "../components/layout";
 import { Copy, Plus, Activity, ImageIcon, Type } from "lucide-react";
 import WorkbenchDashboard from "./dashboard/WorkbenchDashboard";
 
+// Lazy-load job runners
+const NewTextJob = React.lazy(() => import("./jobs/text/NewTextJob"));
+
 interface WorkbenchLayoutProps {
   isDark: boolean;
   onToggleTheme: () => void;
@@ -18,13 +21,11 @@ export default function WorkbenchLayout({ isDark, onToggleTheme }: WorkbenchLayo
         <Suspense fallback={<div className="p-8 text-center text-stone-500">Loading Workbench...</div>}>
           <Routes>
             <Route path="/" element={<WorkbenchDashboard />} />
-            {/* New Job Runner Flows (To be implemented) */}
-            {/* <Route path="/jobs/new/text" element={<NewTextJob />} /> */}
+            {/* New Job Runner Flows */}
+            <Route path="/jobs/new/text" element={<NewTextJob />} />
             {/* <Route path="/jobs/new/image" element={<NewImageJob />} /> */}
-            {/* <Route path="/jobs/:id/review" element={<JobReview />} /> */}
-            {/* <Route path="/jobs/:id/result" element={<JobResult />} /> */}
             
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/workbench" replace />} />
           </Routes>
         </Suspense>
       </main>

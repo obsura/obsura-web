@@ -37,7 +37,7 @@ export default function WorkbenchDashboard() {
               <p className="text-sm text-stone-500 mt-1 mb-4">
                 Paste raw text, logs, or documents. Review findings and approve transformations before copying the result.
               </p>
-              <Link to="/quick-redact?mode=text">
+              <Link to="/workbench/jobs/new/text">
                 <Button variant="primary">
                   New Text Job
                 </Button>
