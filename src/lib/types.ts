@@ -74,6 +74,25 @@ export interface TextAnalyzeTransformResponse {
   job_id: string | null;
 }
 
+export interface TextAnalysisRequest {
+  title?: string;
+  content: string;
+  content_type?: "text";
+  apply_builtins?: boolean;
+  pattern_ids?: string[];
+  custom_entity_ids?: string[];
+  configuration_ids?: string[];
+  default_transformation?: TextTransformationConfig;
+  persist_job?: boolean;
+  persist_source_content?: boolean;
+}
+
+export interface TextAnalysisResponse {
+  job_id: string | null;
+  findings: FindingRecord[];
+  summary: Record<string, number>;
+}
+
 export interface ImageAnalyzeManifest {
   title?: string;
   content_type?: "image" | "screenshot";

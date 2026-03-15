@@ -9,6 +9,8 @@ import {
   VersionResponse,
   TextAnalyzeTransformRequest,
   TextAnalyzeTransformResponse,
+  TextAnalysisRequest,
+  TextAnalysisResponse,
   ImageAnalyzeManifest,
   ImageAnalyzeResponse,
   ImageTransformManifest,
@@ -117,6 +119,17 @@ export const api = {
         signal,
       },
     );
+  },
+
+  async analyzeText(
+    payload: TextAnalysisRequest,
+    signal?: AbortSignal,
+  ): Promise<TextAnalysisResponse> {
+    return await apiFetch<TextAnalysisResponse>("/workflows/text/analyze", {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal,
+    });
   },
 
   async analyzeImage(
