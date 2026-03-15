@@ -31,8 +31,8 @@ export const ImageMode = () => {
   // Advanced Options State
   const [detectText, setDetectText] = useLocalStorage("obsura_img_detectText", true);
   const [detectFaces, setDetectFaces] = useLocalStorage("obsura_img_detectFaces", false);
-  const [transformMode, setTransformMode] = useLocalStorage<any>("obsura_img_transformMode", "mask");
-  const [blurRadius, setBlurRadius] = useLocalStorage("obsura_img_blurRadius", 20);
+  const [transformMode, setTransformMode] = useLocalStorage<any>("obsura_img_transformMode", "blur");
+  const [blurRadius, setBlurRadius] = useLocalStorage("obsura_img_blurRadius", 5);
 
   const { analysis, output, isLoading, error, analyzeImage, redactImage, reset: resetHook } = useImageRedaction();
 
