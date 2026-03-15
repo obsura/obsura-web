@@ -1,9 +1,10 @@
 import React from "react";
-import { Settings2, Plus, AlertCircle } from "lucide-react";
+import { Settings2, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ConfigurationRead, ConfigurationKind } from "../../lib/types";
 import { Card, Button, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
+import ConfigEditorSheet from "./ConfigEditorSheet";
 
 function kindLabel(kind: ConfigurationKind) {
   return { pack: "Pack", profile: "Profile", preset: "Preset" }[kind] ?? kind;
@@ -20,46 +21,86 @@ function kindColor(kind: ConfigurationKind) {
 export default function ConfigList() {
   const [configs, setConfigs] = React.useState<ConfigurationRead[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
+  const [activeConfigId, setActiveConfigId] = React.useState<string | null>(null);
+
+  const loadConfigs = React.useCallback(async (signal?: AbortSignal, background = false) => {
+    if (background) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    setError(null);
+
+    try {
+      const { data, pagination } = await api.listConfigurations({ page: 1, page_size: 50 }, signal);
+      setConfigs(data);
+      setTotal(pagination.total_items);
+    } catch (err) {
+      if (!(err instanceof Error) || err.name !== "AbortError") {
+        setError(err instanceof Error ? err.message : "Failed to load configurations.");
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   React.useEffect(() => {
     const controller = new AbortController();
-
-    api
-      .listConfigurations({ page: 1, page_size: 50 }, controller.signal)
-      .then(({ data, pagination }) => {
-        setConfigs(data);
-        setTotal(pagination.total_items);
-      })
-      .catch((err: Error) => {
-        if (err.name !== "AbortError") setError(err.message);
-      })
-      .finally(() => setLoading(false));
-
+    void loadConfigs(controller.signal);
     return () => controller.abort();
+  }, [loadConfigs]);
+
+  const openCreate = React.useCallback(() => {
+    setEditorMode("create");
+    setActiveConfigId(null);
+    setEditorOpen(true);
   }, []);
+
+  const openEdit = React.useCallback((configId: string) => {
+    setEditorMode("edit");
+    setActiveConfigId(configId);
+    setEditorOpen(true);
+  }, []);
+
+  const onSaved = React.useCallback(async () => {
+    setEditorOpen(false);
+    setActiveConfigId(null);
+    await loadConfigs(undefined, true);
+  }, [loadConfigs]);
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-semibold text-stone-900">Configurations</h1>
           <p className="mt-0.5 text-sm text-stone-500">
             {loading ? "Loading…" : `${total} configuration${total !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          disabled
-          title="Coming in Phase 3"
-          className="flex items-center gap-1.5"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New configuration
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void loadConfigs(undefined, true)}
+            isLoading={refreshing}
+            className="flex items-center gap-1.5"
+          >
+            {!refreshing ? <RefreshCw className="h-3.5 w-3.5" /> : null}
+            Refresh
+          </Button>
+          <Button variant="primary" size="sm" className="flex items-center gap-1.5" onClick={openCreate}>
+            <Plus className="h-3.5 w-3.5" />
+            New configuration
+          </Button>
+        </div>
       </div>
 
       {/* Body */}
@@ -89,6 +130,12 @@ export default function ConfigList() {
             title="No configurations yet"
             description="Configurations (packs, profiles, presets) bundle patterns and custom entities together. Reference them when running redaction jobs."
           />
+          <div className="mt-6 flex justify-center">
+            <Button variant="primary" className="flex items-center gap-1.5" onClick={openCreate}>
+              <Plus className="h-3.5 w-3.5" />
+              Create first configuration
+            </Button>
+          </div>
         </Card>
       )}
 
@@ -97,7 +144,10 @@ export default function ConfigList() {
           {configs.map((config) => (
             <Card
               key={config.id}
-              className="flex items-center gap-4 p-4 hover:shadow-sm transition-shadow"
+              className={cn(
+                "flex items-center gap-4 p-4 hover:shadow-sm transition-shadow",
+                editorOpen && activeConfigId === config.id ? "ring-2 ring-amber-200" : ""
+              )}
             >
               <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50">
                 <Settings2 className="h-4 w-4 text-amber-600" />
@@ -114,9 +164,7 @@ export default function ConfigList() {
                     </Badge>
                   )}
                 </div>
-                {config.description && (
-                  <p className="mt-0.5 truncate text-xs text-stone-400">{config.description}</p>
-                )}
+                {config.description ? <p className="mt-0.5 truncate text-xs text-stone-400">{config.description}</p> : <p className="mt-0.5 truncate text-xs text-stone-300">No description</p>}
               </div>
               <div className="flex flex-shrink-0 items-center gap-3">
                 {(config.pattern_ids?.length ?? 0) > 0 && (
@@ -124,14 +172,39 @@ export default function ConfigList() {
                     {config.pattern_ids!.length} pattern{config.pattern_ids!.length !== 1 ? "s" : ""}
                   </span>
                 )}
+                {(config.custom_entity_ids?.length ?? 0) > 0 && (
+                  <span className="text-[10px] text-stone-400">
+                    {config.custom_entity_ids!.length} entit{config.custom_entity_ids!.length !== 1 ? "ies" : "y"}
+                  </span>
+                )}
                 <span className="text-[10px] text-stone-400">
                   {new Date(config.created_at).toLocaleDateString()}
                 </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1.5"
+                  onClick={() => openEdit(config.id)}
+                >
+                  <PencilLine className="h-3.5 w-3.5" />
+                  Edit
+                </Button>
               </div>
             </Card>
           ))}
         </div>
       )}
+
+      <ConfigEditorSheet
+        open={editorOpen}
+        mode={editorMode}
+        configId={activeConfigId}
+        onClose={() => {
+          setEditorOpen(false);
+          setActiveConfigId(null);
+        }}
+        onSaved={onSaved}
+      />
     </div>
   );
 }
