@@ -3,11 +3,11 @@ import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom"
 import { FlaskConical, Layers, Settings2, History, ChevronLeft, LayoutDashboard, Building2, Sun, Moon } from "lucide-react";
 import { ThemeToggleButton } from "../components/common/UI";
 import { cn } from "../lib/utils";
-import StudioHome from "./StudioHome";
-import PatternList from "./patterns/PatternList";
-import EntityList from "./entities/EntityList";
-import ConfigList from "./configurations/ConfigList";
-import JobList from "./jobs/JobList";
+import StudioHome from "./StudioHome.tsx";
+import PatternList from "./patterns/PatternList.tsx";
+import EntityList from "./entities/EntityList.tsx";
+import ConfigList from "./configurations/ConfigList.tsx";
+import JobList from "./jobs/JobList.tsx";
 
 interface StudioLayoutProps {
   isDark: boolean;

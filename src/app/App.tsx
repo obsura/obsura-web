@@ -11,7 +11,7 @@ import { Type, Image as ImageIcon } from "lucide-react";
 import { useLocalStorage } from "../hooks/use-local-storage";
 import React, { lazy, Suspense } from "react";
 
-const StudioLayout = lazy(() => import("../studio/StudioLayout"));
+const StudioLayout = lazy(() => import("../studio/StudioLayout.tsx"));
 
 function HomePage({ isDark, onToggleTheme }: { isDark: boolean; onToggleTheme: () => void }) {
   const [mode, setMode] = useLocalStorage<RedactionMode>("obsura_active_mode", "text");

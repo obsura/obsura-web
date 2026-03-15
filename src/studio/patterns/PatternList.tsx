@@ -1,9 +1,10 @@
 import React from "react";
-import { FlaskConical, Plus, AlertCircle } from "lucide-react";
+import { FlaskConical, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { PatternRead } from "../../lib/types";
 import { Card, Button, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
+import PatternEditorSheet from "./PatternEditorSheet";
 
 function matcherKindLabel(kind: string) {
   const labels: Record<string, string> = {
@@ -30,113 +31,193 @@ function matcherKindColor(kind: string) {
 export default function PatternList() {
   const [patterns, setPatterns] = React.useState<PatternRead[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
+  const [activePatternId, setActivePatternId] = React.useState<string | null>(null);
+
+  const loadPatterns = React.useCallback(async (signal?: AbortSignal, background = false) => {
+    if (background) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+    }
+
+    setError(null);
+
+    try {
+      const { data, pagination } = await api.listPatterns({ page: 1, page_size: 50 }, signal);
+      setPatterns(data);
+      setTotal(pagination.total_items);
+    } catch (err) {
+      if (!(err instanceof Error) || err.name !== "AbortError") {
+        setError(err instanceof Error ? err.message : "Failed to load patterns.");
+      }
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   React.useEffect(() => {
     const controller = new AbortController();
-
-    api
-      .listPatterns({ page: 1, page_size: 50 }, controller.signal)
-      .then(({ data, pagination }) => {
-        setPatterns(data);
-        setTotal(pagination.total_items);
-      })
-      .catch((err: Error) => {
-        if (err.name !== "AbortError") setError(err.message);
-      })
-      .finally(() => setLoading(false));
-
+    void loadPatterns(controller.signal);
     return () => controller.abort();
+  }, [loadPatterns]);
+
+  const handleCreate = React.useCallback(() => {
+    setEditorMode("create");
+    setActivePatternId(null);
+    setEditorOpen(true);
   }, []);
 
+  const handleEdit = React.useCallback((patternId: string) => {
+    setEditorMode("edit");
+    setActivePatternId(patternId);
+    setEditorOpen(true);
+  }, []);
+
+  const handleSaved = React.useCallback(async () => {
+    setEditorOpen(false);
+    setActivePatternId(null);
+    await loadPatterns(undefined, true);
+  }, [loadPatterns]);
+
   return (
-    <div className="flex-1 overflow-y-auto p-8">
+    <>
+      <div className="flex-1 overflow-y-auto p-8">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-stone-900">Patterns</h1>
-          <p className="mt-0.5 text-sm text-stone-500">
-            {loading ? "Loading…" : `${total} pattern${total !== 1 ? "s" : ""}`}
-          </p>
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-stone-900">Patterns</h1>
+            <p className="mt-0.5 text-sm text-stone-500">
+              {loading ? "Loading…" : `${total} pattern${total !== 1 ? "s" : ""}`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void loadPatterns(undefined, true)}
+              isLoading={refreshing}
+              className="flex items-center gap-1.5"
+            >
+              {!refreshing ? <RefreshCw className="h-3.5 w-3.5" /> : null}
+              Refresh
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleCreate}
+              className="flex items-center gap-1.5"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New pattern
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="primary"
-          size="sm"
-          disabled
-          title="Coming in Phase 2"
-          className="flex items-center gap-1.5"
-        >
-          <Plus className="h-3.5 w-3.5" />
-          New pattern
-        </Button>
-      </div>
 
       {/* Body */}
-      {loading && (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-xl bg-stone-100" />
-          ))}
-        </div>
-      )}
+        {loading && (
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 animate-pulse rounded-xl bg-stone-100" />
+            ))}
+          </div>
+        )}
 
-      {!loading && error && (
-        <Card className="p-6">
-          <PanelState
-            icon={<AlertCircle className="h-8 w-8 text-red-400" />}
-            title="Failed to load patterns"
-            description={error}
-            tone="error"
-          />
-        </Card>
-      )}
+        {!loading && error && (
+          <Card className="p-6">
+            <PanelState
+              icon={<AlertCircle className="h-8 w-8 text-red-400" />}
+              title="Failed to load patterns"
+              description={error}
+              tone="error"
+            />
+          </Card>
+        )}
 
-      {!loading && !error && patterns.length === 0 && (
-        <Card className="p-10">
-          <PanelState
-            icon={<FlaskConical className="h-10 w-10 text-stone-300" />}
-            title="No patterns yet"
-            description="Patterns let you define what to detect using regex, exact match, or list matchers. Create your first pattern to get started."
-          />
-        </Card>
-      )}
+        {!loading && !error && patterns.length === 0 && (
+          <Card className="p-10">
+            <PanelState
+              icon={<FlaskConical className="h-10 w-10 text-stone-300" />}
+              title="No patterns yet"
+              description="Patterns let you define what to detect using regex, exact match, or list matchers. Create your first pattern to get started."
+            />
+            <div className="mt-6 flex justify-center">
+              <Button variant="primary" onClick={handleCreate} className="flex items-center gap-1.5">
+                <Plus className="h-3.5 w-3.5" />
+                Create first pattern
+              </Button>
+            </div>
+          </Card>
+        )}
 
-      {!loading && !error && patterns.length > 0 && (
-        <div className="space-y-2">
-          {patterns.map((pattern) => (
-            <Card
-              key={pattern.id}
-              className="flex items-center gap-4 p-4 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-violet-50">
-                <FlaskConical className="h-4 w-4 text-violet-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate text-sm font-medium text-stone-900">{pattern.name}</p>
-                  <Badge
-                    className={cn("flex-shrink-0 border text-[10px] font-medium", matcherKindColor(pattern.matcher.kind))}
-                  >
-                    {matcherKindLabel(pattern.matcher.kind)}
-                  </Badge>
-                  {!pattern.is_active && (
-                    <Badge className="flex-shrink-0 border border-stone-100 bg-stone-50 text-[10px] font-medium text-stone-500">
-                      Inactive
+        {!loading && !error && patterns.length > 0 && (
+          <div className="space-y-2">
+            {patterns.map((pattern) => (
+              <Card
+                key={pattern.id}
+                className={cn(
+                  "flex items-center gap-4 p-4 transition-shadow hover:shadow-sm",
+                  activePatternId === pattern.id && editorOpen && "ring-2 ring-indigo-200"
+                )}
+              >
+                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-violet-50">
+                  <FlaskConical className="h-4 w-4 text-violet-600" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium text-stone-900">{pattern.name}</p>
+                    <Badge
+                      className={cn("flex-shrink-0 border text-[10px] font-medium", matcherKindColor(pattern.matcher.kind))}
+                    >
+                      {matcherKindLabel(pattern.matcher.kind)}
                     </Badge>
+                    {!pattern.is_active && (
+                      <Badge className="flex-shrink-0 border border-stone-100 bg-stone-50 text-[10px] font-medium text-stone-500">
+                        Inactive
+                      </Badge>
+                    )}
+                  </div>
+                  {pattern.description ? (
+                    <p className="mt-0.5 truncate text-xs text-stone-400">{pattern.description}</p>
+                  ) : (
+                    <p className="mt-0.5 truncate text-xs text-stone-300">No description</p>
                   )}
                 </div>
-                {pattern.description && (
-                  <p className="mt-0.5 truncate text-xs text-stone-400">{pattern.description}</p>
-                )}
-              </div>
-              <span className="flex-shrink-0 text-[10px] text-stone-400">
-                {new Date(pattern.created_at).toLocaleDateString()}
-              </span>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+                <div className="flex flex-shrink-0 items-center gap-3">
+                  <span className="text-[10px] text-stone-400">
+                    {new Date(pattern.created_at).toLocaleDateString()}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(pattern.id)}
+                    className="flex items-center gap-1.5"
+                  >
+                    <PencilLine className="h-3.5 w-3.5" />
+                    Edit
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <PatternEditorSheet
+        open={editorOpen}
+        mode={editorMode}
+        patternId={activePatternId}
+        onClose={() => {
+          setEditorOpen(false);
+          setActivePatternId(null);
+        }}
+        onSaved={handleSaved}
+      />
+    </>
   );
 }
