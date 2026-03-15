@@ -11,10 +11,30 @@ const getApiBaseUrl = () => {
   return cleanUrl;
 };
 
+const getApiOrigin = (apiBaseUrl: string) => {
+  const rawOrigin =
+    (window as any)._env_?.VITE_API_ORIGIN ||
+    (import.meta as any).env.VITE_API_ORIGIN;
+
+  if (rawOrigin && typeof rawOrigin === "string") {
+    return rawOrigin.replace(/\/+$/, "");
+  }
+
+  try {
+    const parsed = new URL(apiBaseUrl);
+    return `${parsed.protocol}//${parsed.host}`;
+  } catch {
+    return apiBaseUrl.replace(/\/api\/v\d+.*$/i, "").replace(/\/+$/, "");
+  }
+};
+
 export const joinUrl = (base: string, path: string) => {
   return `${base}/${path.replace(/^\/+/, "")}`;
 };
 
+const apiBaseUrl = getApiBaseUrl();
+
 export const env = {
-  API_BASE_URL: getApiBaseUrl(),
+  API_BASE_URL: apiBaseUrl,
+  API_ORIGIN: getApiOrigin(apiBaseUrl),
 };

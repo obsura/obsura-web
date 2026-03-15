@@ -11,6 +11,10 @@ if [ -n "$VITE_API_BASE_URL" ]; then
     echo "  VITE_API_BASE_URL: \"$VITE_API_BASE_URL\"," >> /usr/share/nginx/html/env-config.js
 fi
 
+if [ -n "$VITE_API_ORIGIN" ]; then
+    echo "  VITE_API_ORIGIN: \"$VITE_API_ORIGIN\"," >> /usr/share/nginx/html/env-config.js
+fi
+
 echo "};" >> /usr/share/nginx/html/env-config.js
 
 exec "$@"
