@@ -1,9 +1,21 @@
 import React from "react";
-import { History, AlertCircle, Clock, CheckCircle2, XCircle, Loader2, Eye, Sparkles } from "lucide-react";
+import {
+  History,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Eye,
+  Sparkles,
+  RefreshCw,
+} from "lucide-react";
 import { api } from "../../lib/api";
 import type { JobRead, JobStatus } from "../../lib/types";
-import { Card, Badge, PanelState } from "../../components/common/UI";
+import { Button, Card, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
+import JobDetailSheet from "./JobDetailSheet.tsx";
+import JobReviewSheet from "./JobReviewSheet.tsx";
 
 function statusConfig(status: JobStatus) {
   switch (status) {
@@ -31,14 +43,23 @@ function contentTypeLabel(ct: string) {
 export default function JobList() {
   const [jobs, setJobs] = React.useState<JobRead[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
 
-  React.useEffect(() => {
-    const controller = new AbortController();
+  // Detail sheet state
+  const [detailJobId, setDetailJobId] = React.useState<string | null>(null);
+
+  // Review sheet state
+  const [reviewJob, setReviewJob] = React.useState<JobRead | null>(null);
+
+  function loadJobs(signal?: AbortSignal, background = false) {
+    if (!background) setLoading(true);
+    else setRefreshing(true);
+    setError(null);
 
     api
-      .listJobs({ page: 1, page_size: 50 }, controller.signal)
+      .listJobs({ page: 1, page_size: 50 }, signal)
       .then(({ data, pagination }) => {
         setJobs(data);
         setTotal(pagination.total_items);
@@ -46,10 +67,46 @@ export default function JobList() {
       .catch((err: Error) => {
         if (err.name !== "AbortError") setError(err.message);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
+  }
 
+  React.useEffect(() => {
+    const controller = new AbortController();
+    loadJobs(controller.signal);
     return () => controller.abort();
   }, []);
+
+  function handleRefresh() {
+    loadJobs(undefined, true);
+  }
+
+  function handleViewDetail(id: string) {
+    setDetailJobId(id);
+  }
+
+  function handleDetailClose() {
+    setDetailJobId(null);
+  }
+
+  function handleOpenReview(job: JobRead) {
+    setDetailJobId(null);
+    setReviewJob(job);
+  }
+
+  function handleReviewClose() {
+    setReviewJob(null);
+  }
+
+  function handleReviewed(updatedJob: JobRead) {
+    setReviewJob(null);
+    // Replace the updated job in the list and refreshing in background
+    setJobs((prev) => prev.map((j) => (j.id === updatedJob.id ? updatedJob : j)));
+    // Also do a soft refresh in background to sync full list
+    loadJobs(undefined, true);
+  }
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
@@ -61,6 +118,10 @@ export default function JobList() {
             {loading ? "Loading…" : `${total} job${total !== 1 ? "s" : ""}`}
           </p>
         </div>
+        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading || refreshing}>
+          <RefreshCw className={cn("mr-1.5 h-3.5 w-3.5", refreshing && "animate-spin")} />
+          Refresh
+        </Button>
       </div>
 
       {/* Body */}
@@ -98,10 +159,14 @@ export default function JobList() {
           {jobs.map((job) => {
             const { label, icon: StatusIcon, color } = statusConfig(job.status);
             const findingCount = job.findings?.length ?? 0;
+            const canReview = job.status === "analyzed" || job.status === "reviewing";
             return (
               <Card
                 key={job.id}
-                className="flex items-center gap-4 p-4 hover:shadow-sm transition-shadow"
+                className={cn(
+                  "flex items-center gap-4 p-4 hover:shadow-sm transition-shadow",
+                  detailJobId === job.id && "ring-2 ring-emerald-300 ring-offset-1",
+                )}
               >
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-50">
                   <History className="h-4 w-4 text-emerald-600" />
@@ -121,15 +186,51 @@ export default function JobList() {
                   </div>
                   <p className="mt-0.5 text-xs text-stone-400">
                     {findingCount} finding{findingCount !== 1 ? "s" : ""}
+                    {" · "}
+                    {new Date(job.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <span className="flex-shrink-0 text-[10px] text-stone-400">
-                  {new Date(job.created_at).toLocaleDateString()}
-                </span>
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                  {canReview && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleOpenReview(job)}
+                    >
+                      <Eye className="mr-1 h-3 w-3" />
+                      Review
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewDetail(job.id)}
+                  >
+                    View
+                  </Button>
+                </div>
               </Card>
             );
           })}
         </div>
+      )}
+
+      {/* Detail sheet */}
+      {detailJobId && (
+        <JobDetailSheet
+          jobId={detailJobId}
+          onClose={handleDetailClose}
+          onReview={handleOpenReview}
+        />
+      )}
+
+      {/* Review sheet */}
+      {reviewJob && (
+        <JobReviewSheet
+          job={reviewJob}
+          onClose={handleReviewClose}
+          onReviewed={handleReviewed}
+        />
       )}
     </div>
   );
