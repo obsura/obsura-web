@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
-import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button, Card, CheckboxField, FormField, Input, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta } from "../common/UI";
+import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, AlertCircle } from "lucide-react";
+import { Button, Card, CheckboxField, DisclosureToggle, FormField, Input, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -214,16 +214,13 @@ export const TextMode = () => {
             inputClassName="focus:ring-offset-1 transition-all"
             labelClassName="text-xs font-medium text-stone-500 group-hover:text-stone-700"
           />
-          <button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 rounded-md px-1 text-xs font-medium text-stone-600 transition-colors hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-            aria-expanded={showAdvanced}
-            aria-controls="advanced-options-panel"
-          >
-            <Settings2 className="h-4 w-4" aria-hidden="true" />
-            Advanced options
-            {showAdvanced ? <ChevronUp className="h-3 w-3" aria-hidden="true" /> : <ChevronDown className="h-3 w-3" aria-hidden="true" />}
-          </button>
+          <DisclosureToggle
+            isOpen={showAdvanced}
+            onToggle={() => setShowAdvanced(!showAdvanced)}
+            label="Advanced options"
+            icon={<Settings2 className="h-4 w-4" aria-hidden="true" />}
+            controls="advanced-options-panel"
+          />
         </div>
       </div>
 

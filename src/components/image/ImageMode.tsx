@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge, CheckboxField, FormField, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta, Textarea } from "../common/UI";
+import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
+import { Button, Card, Badge, CheckboxField, DisclosureToggle, FormField, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -603,16 +603,13 @@ export const ImageMode = () => {
             inputClassName="focus:ring-offset-1 transition-all"
             labelClassName="text-xs font-medium text-stone-500 group-hover:text-stone-700"
           />
-          <button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 px-1"
-            aria-expanded={showAdvanced}
-            aria-controls="image-advanced-options"
-          >
-            <Settings2 className="w-4 h-4" aria-hidden="true" />
-            Advanced options
-            {showAdvanced ? <ChevronUp className="w-3 h-3" aria-hidden="true" /> : <ChevronDown className="w-3 h-3" aria-hidden="true" />}
-          </button>
+          <DisclosureToggle
+            isOpen={showAdvanced}
+            onToggle={() => setShowAdvanced(!showAdvanced)}
+            label="Advanced options"
+            icon={<Settings2 className="w-4 h-4" aria-hidden="true" />}
+            controls="image-advanced-options"
+          />
         </div>
       </div>
 

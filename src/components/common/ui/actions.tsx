@@ -4,6 +4,7 @@
  */
 
 import React from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -98,4 +99,41 @@ export const ThemeToggleButton = React.forwardRef<HTMLButtonElement, ThemeToggle
       </button>
     );
   }
+);
+
+interface DisclosureToggleProps {
+  isOpen: boolean;
+  onToggle: () => void;
+  label?: React.ReactNode;
+  icon?: React.ReactNode;
+  controls?: string;
+  className?: string;
+}
+
+export const DisclosureToggle = ({
+  isOpen,
+  onToggle,
+  label = "Advanced options",
+  icon,
+  controls,
+  className,
+  ...props
+}: DisclosureToggleProps) => (
+  <button
+    type="button"
+    onClick={onToggle}
+    className={cn(
+      "flex items-center gap-1.5 rounded-md px-1 text-xs font-medium text-stone-600 transition-colors hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
+      className
+    )}
+    aria-expanded={isOpen}
+    aria-controls={controls}
+    {...props}
+  >
+    {icon}
+    {label}
+    {isOpen
+      ? <ChevronUp className="h-3 w-3" aria-hidden="true" />
+      : <ChevronDown className="h-3 w-3" aria-hidden="true" />}
+  </button>
 );
