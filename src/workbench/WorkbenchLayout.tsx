@@ -6,6 +6,7 @@ import WorkbenchDashboard from "./dashboard/WorkbenchDashboard";
 
 // Lazy-load job runners
 const NewTextJob = React.lazy(() => import("./jobs/text/NewTextJob"));
+const NewImageJob = React.lazy(() => import("./jobs/image/NewImageJob"));
 
 interface WorkbenchLayoutProps {
   isDark: boolean;
@@ -23,7 +24,7 @@ export default function WorkbenchLayout({ isDark, onToggleTheme }: WorkbenchLayo
             <Route path="/" element={<WorkbenchDashboard />} />
             {/* New Job Runner Flows */}
             <Route path="/jobs/new/text" element={<NewTextJob />} />
-            {/* <Route path="/jobs/new/image" element={<NewImageJob />} /> */}
+            <Route path="/jobs/new/image" element={<NewImageJob />} />
             
             <Route path="*" element={<Navigate to="/workbench" replace />} />
           </Routes>

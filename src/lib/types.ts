@@ -119,7 +119,7 @@ export interface ImageTransformManifest extends ImageAnalyzeManifest {
 }
 
 export interface ImageAnalyzeResponse {
-  regions: any[];
+  findings: FindingRecord[];
   summary: Record<string, number>;
   job_id: string;
 }
