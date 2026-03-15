@@ -290,3 +290,42 @@ export const PanelState = ({
     {description ? <p className="text-xs max-w-sm">{description}</p> : null}
   </div>
 );
+
+type SettingsSectionProps = React.HTMLAttributes<HTMLDivElement> & {
+  title: React.ReactNode;
+};
+
+export const SettingsSection = ({ title, className, children, ...props }: SettingsSectionProps) => (
+  <div className={cn("space-y-4", className)} {...props}>
+    <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">{title}</h4>
+    {children}
+  </div>
+);
+
+type CheckboxFieldProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "type"> & {
+  label: React.ReactNode;
+  className?: string;
+  labelClassName?: string;
+  inputClassName?: string;
+};
+
+export const CheckboxField = ({
+  label,
+  className,
+  labelClassName,
+  inputClassName,
+  ...props
+}: CheckboxFieldProps) => (
+  <label className={cn("flex items-center gap-3 cursor-pointer group", props.disabled && "opacity-50", className)}>
+    <Checkbox className={inputClassName} {...props} />
+    <span
+      className={cn(
+        "text-sm text-stone-700 group-hover:text-stone-900 transition-colors",
+        props.disabled && "text-stone-500",
+        labelClassName
+      )}
+    >
+      {label}
+    </span>
+  </label>
+);
