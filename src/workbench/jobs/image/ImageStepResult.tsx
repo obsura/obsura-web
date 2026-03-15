@@ -4,6 +4,7 @@ import { Download, CheckCircle2, RotateCcw, Box } from "lucide-react";
 import { JobRead } from "../../../lib/types";
 import { Button, Card, PanelHeader, Badge } from "../../../components/common/UI";
 import { cn } from "../../../lib/utils";
+import { env, joinUrl } from "../../../lib/env";
 
 interface ImageStepResultProps {
   job: JobRead | null;
@@ -15,9 +16,10 @@ export default function ImageStepResult({ job, onReset, previewUrl }: ImageStepR
   const [downloading, setDownloading] = useState(false);
 
   // Fallbacks if outputs missing
-  const outputRecord = job?.outputs?.find(o => o.content_type === "image" && o.output_file_path);
-  const outputSrc = outputRecord?.output_file_path || previewUrl;
-  const isTransformed = !!outputRecord?.output_file_path;
+  const outputRecord = job?.outputs?.find(o => o.content_type === "image" && o.media_url);
+  const transformedSrc = outputRecord?.media_url ? joinUrl(env.API_ORIGIN, outputRecord.media_url) : null;
+  const outputSrc = transformedSrc || previewUrl;
+  const isTransformed = !!transformedSrc;
   
   const handleDownload = async () => {
     if (!outputSrc) return;

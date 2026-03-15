@@ -29,6 +29,9 @@ const getApiOrigin = (apiBaseUrl: string) => {
 };
 
 export const joinUrl = (base: string, path: string) => {
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
   return `${base}/${path.replace(/^\/+/, "")}`;
 };
 
