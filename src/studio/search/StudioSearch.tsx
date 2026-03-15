@@ -1,6 +1,6 @@
 import React from "react";
 import { Search, AlertCircle, Sparkles, ArrowRight, RefreshCw } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../../lib/api";
 import { Button, Card, Input, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
@@ -76,14 +76,25 @@ function parseResult(raw: SearchRecord, i: number): ParsedResult {
 }
 
 export default function StudioSearch() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const queryParam = searchParams.get("q") ?? "";
+  const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const [query, setQuery] = React.useState("");
   const [submittedQuery, setSubmittedQuery] = React.useState("");
   const [results, setResults] = React.useState<ParsedResult[]>([]);
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(pageParam);
   const [totalItems, setTotalItems] = React.useState(0);
   const [totalPages, setTotalPages] = React.useState(1);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!queryParam) return;
+    setQuery(queryParam);
+    setSubmittedQuery(queryParam);
+    setPage(pageParam);
+    void runSearch(queryParam, pageParam);
+  }, [queryParam, pageParam]);
 
   async function runSearch(value: string, targetPage = 1) {
     const q = value.trim();
@@ -112,7 +123,21 @@ export default function StudioSearch() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    runSearch(query, 1);
+    const q = query.trim();
+    if (!q) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("q", q);
+    next.set("page", "1");
+    setSearchParams(next, { replace: true });
+  }
+
+  function handlePageChange(nextPage: number) {
+    const q = submittedQuery.trim();
+    if (!q) return;
+    const next = new URLSearchParams(searchParams);
+    next.set("q", q);
+    next.set("page", String(Math.max(1, nextPage)));
+    setSearchParams(next, { replace: true });
   }
 
   return (
@@ -227,7 +252,7 @@ export default function StudioSearch() {
               totalItems={totalItems}
               totalPages={totalPages}
               disabled={loading}
-              onPageChange={(nextPage) => runSearch(submittedQuery, nextPage)}
+              onPageChange={handlePageChange}
             />
           </div>
         )}

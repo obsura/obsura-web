@@ -34,12 +34,13 @@ function matcherKindColor(kind: string) {
 
 export default function PatternList() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const pageParam = Number(searchParams.get("page") ?? "1");
   const [patterns, setPatterns] = React.useState<PatternRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
-  const [page, setPage] = React.useState(1);
+  const [page, setPage] = React.useState(Math.max(1, Number.isFinite(pageParam) ? pageParam : 1));
   const [totalPages, setTotalPages] = React.useState(1);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
@@ -78,6 +79,11 @@ export default function PatternList() {
   const openFromQuery = searchParams.get("open");
 
   React.useEffect(() => {
+    const nextPage = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+    if (nextPage !== page) setPage(nextPage);
+  }, [page, searchParams]);
+
+  React.useEffect(() => {
     if (!openFromQuery) return;
     setEditorMode("edit");
     setActivePatternId(openFromQuery);
@@ -90,6 +96,17 @@ export default function PatternList() {
     next.delete("open");
     setSearchParams(next, { replace: true });
   }, [openFromQuery, searchParams, setSearchParams]);
+
+  const updatePageInQuery = React.useCallback(
+    (nextPage: number) => {
+      const normalized = Math.max(1, nextPage);
+      const next = new URLSearchParams(searchParams);
+      next.set("page", String(normalized));
+      setSearchParams(next, { replace: true });
+      setPage(normalized);
+    },
+    [searchParams, setSearchParams]
+  );
 
   const handleCreate = React.useCallback(() => {
     setEditorMode("create");
@@ -238,7 +255,7 @@ export default function PatternList() {
               totalItems={total}
               totalPages={totalPages}
               disabled={loading || refreshing}
-              onPageChange={(nextPage) => setPage(nextPage)}
+              onPageChange={updatePageInQuery}
             />
           </>
         )}
