@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Terms of Service | Obsura</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --surface: #ffffff;
+        --line: #e7e5e4;
+        --text: #1c1917;
+        --muted: #57534e;
+        --accent: #4f46e5;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 18px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 22px -18px rgba(0, 0, 0, 0.25);
+        padding: 28px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 1.8rem;
+      }
+      h2 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+      p, li {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .updated {
+        font-size: 0.78rem;
+        color: #78716c;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .back-link svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0.75;
+        transition: transform 0.18s ease, opacity 0.18s ease;
+      }
+      .back-link:hover svg {
+        transform: translateX(-2px);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <div class="top">
+          <a href="/" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M19 12H5" />
+              <path d="M11 18L5 12L11 6" />
+            </svg>
+            <span>Back to Obsura</span>
+          </a>
+          <span class="updated">Last updated: March 15, 2026</span>
+        </div>
+        <h1>Terms of Service</h1>
+        <p>
+          By using Obsura, you agree to use the service lawfully and responsibly.
+        </p>
+
+        <h2>Acceptable Use</h2>
+        <ul>
+          <li>No unlawful, abusive, or malicious usage.</li>
+          <li>No attempts to disrupt service reliability or security.</li>
+          <li>You remain responsible for your submitted content.</li>
+        </ul>
+
+        <h2>Service Availability</h2>
+        <p>
+          Service is provided on an "as is" and "as available" basis without
+          warranties of uninterrupted availability.
+        </p>
+
+        <h2>Liability</h2>
+        <p>
+          To the maximum extent permitted by law, maintainers are not liable for
+          indirect or consequential damages arising from use of the service.
+        </p>
+
+        <h2>Contact</h2>
+        <p>
+          For legal inquiries, contact <a href="mailto:security@obsura.one">security@obsura.one</a>.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

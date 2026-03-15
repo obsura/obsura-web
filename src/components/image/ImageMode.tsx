@@ -424,7 +424,7 @@ export const ImageMode = () => {
                   <span className="hidden sm:inline">Share</span>
                 </Button>
                 {showShareMenu && (output || activeFileObj?.resultImageUrl) && (
-                  <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-stone-200 shadow-xl rounded-md flex flex-col p-1 z-50">
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-white border border-stone-200 shadow-md rounded-md flex flex-col p-1 z-50">
                     <button onClick={() => { handleShare('whatsapp'); setShowShareMenu(false); }} className="flex items-center gap-2 px-3 py-2 hover:bg-stone-50 text-sm w-full text-left rounded-sm transition-colors text-stone-700">
                       <MessageCircle className="w-4 h-4 text-emerald-500" /> WhatsApp (Current)
                     </button>
@@ -521,10 +521,10 @@ export const ImageMode = () => {
                 />
                 
                 <div 
-                  className="absolute top-4 bottom-4 w-[3px] bg-white shadow-[0_0_8px_rgba(0,0,0,0.5)] z-10 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" 
+                  className="absolute top-4 bottom-4 w-[3px] bg-white shadow-[0_0_6px_rgba(0,0,0,0.24)] z-10 pointer-events-none opacity-80 group-hover:opacity-100 transition-opacity" 
                   style={{ left: `calc(1rem + (100% - 2rem) * ${sliderPos / 100})`, transform: 'translateX(-50%)' }}
                 >
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.3)] flex items-center justify-center border border-stone-200">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-full shadow-[0_1px_6px_rgba(0,0,0,0.22)] flex items-center justify-center border border-stone-200">
                     <div className="flex gap-0.5 text-stone-400">
                       <ChevronLeft className="w-4 h-4 -mr-1" />
                       <ChevronRight className="w-4 h-4 -ml-1" />

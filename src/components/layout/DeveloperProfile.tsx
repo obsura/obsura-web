@@ -15,7 +15,7 @@ export const DeveloperProfile = () => {
       </a>
       
       {/* Popover Card */}
-      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 bg-white border border-stone-200 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] rounded-2xl p-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 origin-bottom scale-95 group-hover:scale-100">
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-80 bg-white border border-stone-200 shadow-[0_8px_24px_-14px_rgba(0,0,0,0.16)] rounded-2xl p-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50 origin-bottom scale-95 group-hover:scale-100">
         
         {/* Pointer Triangle */}
         <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-b border-r border-stone-200 rotate-45"></div>

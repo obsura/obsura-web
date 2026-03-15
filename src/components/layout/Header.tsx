@@ -3,11 +3,16 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Shield, Github, BookOpen, Activity, CheckCircle2, Info, RefreshCw, XCircle } from "lucide-react";
-import { Badge } from "../common/UI";
+import { Shield, Github, BookOpen, Activity, CheckCircle2, Info, RefreshCw, XCircle, Moon, Sun } from "lucide-react";
+import { Badge, ThemeToggleButton } from "../common/UI";
 import { useApiStatus } from "../../hooks/use-api-status";
 
-export const Header = () => {
+interface HeaderProps {
+  isDark: boolean;
+  onToggleTheme: () => void;
+}
+
+export const Header = ({ isDark, onToggleTheme }: HeaderProps) => {
   const { health, version, loading, error, refetch } = useApiStatus();
 
   return (
@@ -64,6 +69,14 @@ export const Header = () => {
           <div className="h-4 w-px bg-stone-200 hidden md:block" />
 
           <div className="flex items-center gap-3">
+            <ThemeToggleButton
+              isDark={isDark}
+              onClick={onToggleTheme}
+              title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </ThemeToggleButton>
             <a
               href="#"
               className="text-stone-500 hover:text-stone-900 transition-colors"

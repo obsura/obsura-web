@@ -98,7 +98,7 @@ export const TextMode = () => {
           <Card className="relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 transition-shadow">
             <textarea
               aria-labelledby="original-text-label"
-              className="w-full h-[360px] p-5 text-sm leading-relaxed font-mono bg-transparent border-none focus:ring-0 resize-none placeholder:text-stone-400/70 text-stone-800"
+              className="w-full h-[360px] p-5 text-sm leading-relaxed font-mono bg-transparent border-none outline-none focus:outline-none focus:ring-0 resize-none placeholder:text-stone-400/70 text-stone-800"
               placeholder="Paste sensitive text here (e.g. logs, emails, documents)..."
               value={input}
               onChange={handleInputChange}

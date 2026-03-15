@@ -71,3 +71,25 @@ export const Badge = ({ className, children, variant = "neutral", ...props }: Re
     </span>
   );
 };
+
+interface ThemeToggleButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  isDark: boolean;
+}
+
+export const ThemeToggleButton = React.forwardRef<HTMLButtonElement, ThemeToggleButtonProps>(
+  ({ className, isDark, children, ...props }, ref) => {
+    return (
+      <button
+        ref={ref}
+        className={cn(
+          "h-8 w-8 rounded-md border border-stone-200 bg-white text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-colors inline-flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+          isDark && "border-stone-600 bg-stone-800 text-stone-200 hover:bg-stone-700 hover:text-stone-50",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
+);

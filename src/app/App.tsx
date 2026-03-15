@@ -12,13 +12,20 @@ import { cn } from "../lib/utils";
 import { Type, Image as ImageIcon, ShieldCheck } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useLocalStorage } from "../hooks/use-local-storage";
+import React from "react";
 
 export default function App() {
   const [mode, setMode] = useLocalStorage<RedactionMode>("obsura_active_mode", "text");
+  const [theme, setTheme] = useLocalStorage<"light" | "dark">("obsura_theme", "light");
+  const isDark = theme === "dark";
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle("dark", isDark);
+  }, [isDark]);
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      <Header />
+      <Header isDark={isDark} onToggleTheme={() => setTheme(isDark ? "light" : "dark")} />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
         <div className="max-w-5xl mx-auto space-y-6">
@@ -67,7 +74,7 @@ export default function App() {
           </div>
 
           {/* Workspace */}
-          <div className="bg-white rounded-2xl border border-stone-200 shadow-xl shadow-stone-200/50 p-6 md:p-8 min-h-[500px]">
+          <div className="bg-white rounded-2xl border border-stone-200 shadow-md shadow-stone-200/30 dark:shadow-black/25 p-6 md:p-8 min-h-[500px]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={mode}
@@ -88,9 +95,9 @@ export default function App() {
                 &copy; 2026 Obsura Project. Created with &hearts; by <DeveloperProfile />.
               </p>
               <div className="flex items-center gap-6">
-                <a href="#" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors">Privacy Policy</a>
-                <a href="#" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors">Security Audit</a>
-                <a href="#" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 transition-colors">Terms of Service</a>
+                <a href="/privacy-policy.html" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 focus-visible:text-stone-900 transition-colors underline-offset-4 hover:underline focus-visible:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" rel="noopener noreferrer">Privacy Policy</a>
+                <a href="/security-audit.html" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 focus-visible:text-stone-900 transition-colors underline-offset-4 hover:underline focus-visible:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" rel="noopener noreferrer">Security Audit</a>
+                <a href="/terms-of-service.html" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 focus-visible:text-stone-900 transition-colors underline-offset-4 hover:underline focus-visible:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" rel="noopener noreferrer">Terms of Service</a>
               </div>
             </div>
           </footer>
