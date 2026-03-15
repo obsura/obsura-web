@@ -19,7 +19,7 @@ export const Header = ({ isDark, onToggleTheme }: HeaderProps) => {
   return (
     <header className="w-full border-b border-stone-200 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <a href="#">
+        <Link to="/workbench">
           <div className="flex items-center gap-3">
             <div className="rounded-lg flex items-center justify-center pointer-events-none select-none">
               <img src="/favicon.svg" alt="Obsura Logo" className="w-8 h-8 rounded-lg" />
@@ -31,7 +31,7 @@ export const Header = ({ isDark, onToggleTheme }: HeaderProps) => {
               </p>
             </div>
           </div>
-        </a>
+        </Link>
 
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-2">
