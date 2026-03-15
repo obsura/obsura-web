@@ -6,6 +6,9 @@ import type { ConfigurationRead, ConfigurationKind } from "../../lib/types";
 import { Card, Button, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import ConfigEditorSheet from "./ConfigEditorSheet";
+import PaginationBar from "../common/PaginationBar";
+
+const PAGE_SIZE = 50;
 
 function kindLabel(kind: ConfigurationKind) {
   return { pack: "Pack", profile: "Profile", preset: "Preset" }[kind] ?? kind;
@@ -26,6 +29,8 @@ export default function ConfigList() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activeConfigId, setActiveConfigId] = React.useState<string | null>(null);
@@ -40,9 +45,10 @@ export default function ConfigList() {
     setError(null);
 
     try {
-      const { data, pagination } = await api.listConfigurations({ page: 1, page_size: 50 }, signal);
+      const { data, pagination } = await api.listConfigurations({ page, page_size: PAGE_SIZE }, signal);
       setConfigs(data);
       setTotal(pagination.total_items);
+      setTotalPages(pagination.total_pages);
     } catch (err) {
       if (!(err instanceof Error) || err.name !== "AbortError") {
         setError(err instanceof Error ? err.message : "Failed to load configurations.");
@@ -51,7 +57,7 @@ export default function ConfigList() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [page]);
 
   React.useEffect(() => {
     const controller = new AbortController();
@@ -159,8 +165,9 @@ export default function ConfigList() {
       )}
 
       {!loading && !error && configs.length > 0 && (
-        <div className="space-y-2">
-          {configs.map((config) => (
+        <>
+          <div className="space-y-2">
+            {configs.map((config) => (
             <Card
               key={config.id}
               className={cn(
@@ -210,8 +217,18 @@ export default function ConfigList() {
                 </Button>
               </div>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          <PaginationBar
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalItems={total}
+            totalPages={totalPages}
+            disabled={loading || refreshing}
+            onPageChange={(nextPage) => setPage(nextPage)}
+          />
+        </>
       )}
 
       <ConfigEditorSheet

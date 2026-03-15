@@ -17,6 +17,9 @@ import { Button, Card, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import JobDetailSheet from "./JobDetailSheet.tsx";
 import JobReviewSheet from "./JobReviewSheet.tsx";
+import PaginationBar from "../common/PaginationBar";
+
+const PAGE_SIZE = 50;
 
 function statusConfig(status: JobStatus) {
   switch (status) {
@@ -48,6 +51,8 @@ export default function JobList() {
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
+  const [page, setPage] = React.useState(1);
+  const [totalPages, setTotalPages] = React.useState(1);
 
   // Detail sheet state
   const [detailJobId, setDetailJobId] = React.useState<string | null>(null);
@@ -61,10 +66,11 @@ export default function JobList() {
     setError(null);
 
     api
-      .listJobs({ page: 1, page_size: 50 }, signal)
+      .listJobs({ page, page_size: PAGE_SIZE }, signal)
       .then(({ data, pagination }) => {
         setJobs(data);
         setTotal(pagination.total_items);
+        setTotalPages(pagination.total_pages);
       })
       .catch((err: Error) => {
         if (err.name !== "AbortError") setError(err.message);
@@ -79,7 +85,7 @@ export default function JobList() {
     const controller = new AbortController();
     loadJobs(controller.signal);
     return () => controller.abort();
-  }, []);
+  }, [page]);
 
   const viewFromQuery = searchParams.get("view");
 
@@ -173,8 +179,9 @@ export default function JobList() {
       )}
 
       {!loading && !error && jobs.length > 0 && (
-        <div className="space-y-2">
-          {jobs.map((job) => {
+        <>
+          <div className="space-y-2">
+            {jobs.map((job) => {
             const { label, icon: StatusIcon, color } = statusConfig(job.status);
             const findingCount = job.findings?.length ?? 0;
             const canReview = job.status === "analyzed" || job.status === "reviewing";
@@ -229,8 +236,18 @@ export default function JobList() {
                 </div>
               </Card>
             );
-          })}
-        </div>
+            })}
+          </div>
+
+          <PaginationBar
+            page={page}
+            pageSize={PAGE_SIZE}
+            totalItems={total}
+            totalPages={totalPages}
+            disabled={loading || refreshing}
+            onPageChange={(nextPage) => setPage(nextPage)}
+          />
+        </>
       )}
 
       {/* Detail sheet */}
