@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Security Audit | Obsura</title>
+    <style>
+      :root {
+        --bg: #fafaf9;
+        --surface: #ffffff;
+        --line: #e7e5e4;
+        --text: #1c1917;
+        --muted: #57534e;
+        --accent: #4f46e5;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 860px;
+        margin: 40px auto;
+        padding: 0 18px;
+      }
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 8px 22px -18px rgba(0, 0, 0, 0.25);
+        padding: 28px;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 1.8rem;
+      }
+      h2 {
+        margin-top: 24px;
+        font-size: 1.05rem;
+      }
+      p, li {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+      }
+      a:hover {
+        text-decoration: underline;
+      }
+      .top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+      .updated {
+        font-size: 0.78rem;
+        color: #78716c;
+      }
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .back-link svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0.75;
+        transition: transform 0.18s ease, opacity 0.18s ease;
+      }
+      .back-link:hover svg {
+        transform: translateX(-2px);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap">
+      <section class="card">
+        <div class="top">
+          <a href="/" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+              <path d="M19 12H5" />
+              <path d="M11 18L5 12L11 6" />
+            </svg>
+            <span>Back to Obsura</span>
+          </a>
+          <span class="updated">Last updated: March 15, 2026</span>
+        </div>
+        <h1>Security Audit</h1>
+        <p>
+          Obsura follows practical security controls to protect users and service integrity.
+        </p>
+
+        <h2>Controls</h2>
+        <ul>
+          <li>HTTP hardening headers and secure deployment defaults.</li>
+          <li>Rate limiting and abuse protection at the edge layer.</li>
+          <li>Dependency updates and release pipeline safeguards.</li>
+        </ul>
+
+        <h2>Disclosure Process</h2>
+        <p>
+          Vulnerabilities should be reported privately. Do not post sensitive
+          findings in public issues.
+        </p>
+
+        <h2>Responsible Reporting</h2>
+        <p>
+          Send security reports to <a href="mailto:security@obsura.one">security@obsura.one</a>
+          with clear reproduction details and impact assessment.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
