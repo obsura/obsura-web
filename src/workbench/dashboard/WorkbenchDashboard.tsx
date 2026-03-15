@@ -60,7 +60,7 @@ export default function WorkbenchDashboard() {
               <p className="text-sm text-stone-500 mt-1 mb-4">
                 Upload screenshots or images. Automatically mask texts and blur faces before downloading safely.
               </p>
-              <Link to="/quick-redact?mode=image">
+              <Link to="/workbench/jobs/new/image">
                 <Button variant="primary">
                   New Image Job
                 </Button>
