@@ -45,7 +45,7 @@ export const DeveloperProfile = () => {
           <a href="mailto:mahros.elqabasy@gmail.com" className="flex items-center gap-2.5 text-xs text-stone-500 hover:text-stone-900 transition-colors w-fit">
             <Mail className="w-3.5 h-3.5 text-stone-400" /> mahros.elqabasy@gmail.com
           </a>
-          <a href="tel:+201015888272" className="flex items-center gap-2.5 text-xs text-stone-500 hover:text-stone-900 transition-colors w-fit">
+          <a href="https://wa.me/+201015888272" className="flex items-center gap-2.5 text-xs text-stone-500 hover:text-stone-900 transition-colors w-fit">
             <Phone className="w-3.5 h-3.5 text-stone-400" /> +20 101 588 8272
           </a>
           <a href="https://github.com/elqabasy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-xs text-stone-500 hover:text-stone-900 transition-colors w-fit">

@@ -4,92 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Terms of Service | Obsura</title>
-    <style>
-      :root {
-        --bg: #fafaf9;
-        --surface: #ffffff;
-        --line: #e7e5e4;
-        --text: #1c1917;
-        --muted: #57534e;
-        --accent: #4f46e5;
-      }
-      body {
-        margin: 0;
-        font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-        background: var(--bg);
-        color: var(--text);
-      }
-      .wrap {
-        max-width: 860px;
-        margin: 40px auto;
-        padding: 0 18px;
-      }
-      .card {
-        background: var(--surface);
-        border: 1px solid var(--line);
-        border-radius: 16px;
-        box-shadow: 0 8px 22px -18px rgba(0, 0, 0, 0.25);
-        padding: 28px;
-      }
-      h1 {
-        margin: 0 0 10px;
-        font-size: 1.8rem;
-      }
-      h2 {
-        margin-top: 24px;
-        font-size: 1.05rem;
-      }
-      p, li {
-        color: var(--muted);
-        line-height: 1.65;
-      }
-      a {
-        color: var(--accent);
-        text-decoration: none;
-      }
-      a:hover {
-        text-decoration: underline;
-      }
-      .top {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 12px;
-      }
-      .updated {
-        font-size: 0.78rem;
-        color: #78716c;
-      }
-      .back-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .back-link svg {
-        width: 14px;
-        height: 14px;
-        opacity: 0.75;
-        transition: transform 0.18s ease, opacity 0.18s ease;
-      }
-      .back-link:hover svg {
-        transform: translateX(-2px);
-        opacity: 1;
-      }
-    </style>
+    <link rel="stylesheet" href="/legal-layout.css" />
   </head>
   <body>
-    <main class="wrap">
-      <section class="card">
-        <div class="top">
-          <a href="/" class="back-link">
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="brand-link" href="/" aria-label="Obsura home">
+          <div class="brand__logo">O</div>
+          <div class="brand">
+            <span class="brand__title">Obsura</span>
+            <span class="brand__subtitle">Privacy-first redaction tools</span>
+          </div>
+        </a>
+        <div class="site-header__actions">
+          <a class="top-link" href="/">App</a>
+          <a class="top-link" href="https://github.com/obsura/obsura-web" target="_blank" rel="noreferrer">GitHub</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-wrap">
+      <section class="page-card">
+        <div class="page-top">
+          <a href="/" class="back-link" aria-label="Back to Obsura home">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
               <path d="M19 12H5" />
               <path d="M11 18L5 12L11 6" />
             </svg>
             <span>Back to Obsura</span>
           </a>
-          <span class="updated">Last updated: March 15, 2026</span>
+          <span class="page-updated">Last updated: March 15, 2026</span>
         </div>
         <h1>Terms of Service</h1>
         <p>
@@ -121,5 +65,16 @@
         </p>
       </section>
     </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p class="site-footer__copy">Obsura provides private redaction workflows for text and images.</p>
+        <nav class="site-footer__nav" aria-label="Legal links">
+          <a class="site-footer__link" href="/privacy-policy.html">Privacy Policy</a>
+          <a class="site-footer__link" href="/security-audit.html">Security Audit</a>
+          <a class="site-footer__link site-footer__link--active" href="/terms-of-service.html">Terms of Service</a>
+        </nav>
+      </div>
+    </footer>
   </body>
 </html>

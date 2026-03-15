@@ -12,11 +12,11 @@ This document defines the current design system baseline for reusable, scalable 
 ## Brand Direction
 
 - Personality: precise, trustworthy, modern, technical.
-- Primary hue family: teal/cyan.
-- Surface model: soft elevated cards over atmospheric canvas.
+- Primary hue family: stone + indigo.
+- Surface model: soft bordered cards with gentle elevation.
 - Typography:
-  - Sans: Space Grotesk
-  - Mono: IBM Plex Mono
+  - Sans: Inter
+  - Mono: JetBrains Mono
 
 ## Token Architecture
 
@@ -43,8 +43,7 @@ Tokens are defined in src/index.css as CSS variables for both :root and .dark.
 - Interaction
   - --focus-ring
 - Effects
-  - --shadow-soft
-  - --surface-glow
+  - gentle shadow scale via utility classes
 
 ## Reusable Primitives
 
@@ -58,10 +57,18 @@ Defined in src/components/common/UI.tsx:
   - semantic surface container using tokenized styles
 - Badge
   - variants for status and labels
-- SectionHeading
-  - shared title/subtitle block
-- Divider
-  - semantic horizontal divider
+- ThemeToggleButton
+  - reusable icon button for dark/light switching
+- FieldLabel
+  - shared label primitive for inputs
+- Input
+  - base text field style with focus ring
+- Textarea
+  - base multiline field style with focus ring
+- Select
+  - base dropdown style with focus ring
+- Checkbox
+  - shared checkbox primitive for option controls
 
 ## Theme System
 
@@ -72,7 +79,8 @@ Defined in src/components/common/UI.tsx:
 ## Migration Guidance
 
 Some existing components still use older utility color classes.
-A compatibility bridge is temporarily included in src/index.css for dark mode.
+A compatibility bridge is included in src/index.css for dark mode consistency
+while migration to primitives continues.
 
 For new work:
 

@@ -30,6 +30,11 @@ built with React, TypeScript, Vite, and containerized NGINX deployment.
 ## Design System
 
 The UI foundation (brand identity, design tokens, reusable component primitives,
+and dark theme model) is documented in docs/design-system.md.
+
+## Documentation
+
+Browse the documentation index in docs/README.md.
 and dark theme model) is documented in DESIGN_SYSTEM.md.
 	npm ci
 

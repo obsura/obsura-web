@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge } from "../common/UI";
+import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
+import { Button, Card, Badge, CheckboxField, DisclosureToggle, FormField, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -103,8 +103,7 @@ export const ImageMode = () => {
       detect_faces: detectFaces,
       default_transformation: {
         mode: transformMode,
-        overlay_color: "#111111",
-        overlay_label: "REDACTED",
+        overlay_color: "#000000",
         blur_radius: Number(blurRadius),
       },
     };
@@ -329,9 +328,11 @@ export const ImageMode = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Input Column */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900" id="original-image-label">Original image</h3>
-            <div className="flex gap-2">
+          <PanelHeader
+            title="Original image"
+            titleId="original-image-label"
+            actions={
+              <>
               <Button variant="ghost" size="sm" onClick={handleScreenCapture} aria-label="Capture screen">
                 <Monitor className="w-4 h-4 mr-1.5" aria-hidden="true" />
                 Capture
@@ -348,8 +349,9 @@ export const ImageMode = () => {
                   </Button>
                 </>
               )}
-            </div>
-          </div>
+              </>
+            }
+          />
           <Card
             className={`relative h-[360px] flex flex-col items-center justify-center transition-all focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1 ${
               !file ? "border-dashed bg-stone-50/50 hover:bg-stone-100/50 cursor-pointer" : ""
@@ -409,9 +411,11 @@ export const ImageMode = () => {
 
         {/* Output Column */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-stone-900" id="redacted-image-label">Redacted output</h3>
-            <div className="flex items-center gap-2">
+          <PanelHeader
+            title="Redacted output"
+            titleId="redacted-image-label"
+            actions={
+              <>
               <div className="relative">
                 <Button
                   variant="ghost"
@@ -477,23 +481,29 @@ export const ImageMode = () => {
                   </span>
                 </Button>
               )}
-            </div>
-          </div>
+              </>
+            }
+          />
           <Card 
             className="bg-stone-50/50 h-[360px] flex items-center justify-center relative focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-1"
             role="region"
             aria-labelledby="redacted-image-label"
           >
             {error ? (
-              <div role="alert" className="flex flex-col items-center justify-center text-red-500 space-y-2 p-4 text-center">
-                <AlertCircle className="w-8 h-8 opacity-50" />
-                <p className="text-xs max-w-[80%]">{error}</p>
-              </div>
+              <PanelState
+                role="alert"
+                tone="error"
+                icon={<AlertCircle className="w-8 h-8 opacity-50" />}
+                description={error}
+                className="max-w-[80%]"
+              />
             ) : isLoading && !output && !analysis ? (
-              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2 animate-pulse">
-                <RefreshCw className="w-8 h-8 opacity-20 animate-spin" />
-                <p className="text-xs" aria-live="polite">Processing image...</p>
-              </div>
+              <PanelState
+                animated
+                icon={<RefreshCw className="w-8 h-8 opacity-20 animate-spin" />}
+                description="Processing image..."
+                aria-live="polite"
+              />
             ) : output ? (
               <div className="relative w-full h-full flex items-center justify-center overflow-hidden p-4 group">
                 <img
@@ -533,31 +543,26 @@ export const ImageMode = () => {
                 </div>
               </div>
             ) : analysis ? (
-              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2">
-                <ImageIcon className="w-8 h-8 opacity-20" />
-                <p className="text-xs font-medium text-stone-600">Analysis complete</p>
-                <p className="text-xs">Click "Redact image" to apply transformations</p>
-              </div>
+              <PanelState
+                icon={<ImageIcon className="w-8 h-8 opacity-20" />}
+                title="Analysis complete"
+                description={'Click "Redact image" to apply transformations'}
+              />
             ) : (
-              <div className="flex flex-col items-center justify-center text-stone-400 space-y-2">
-                <ImageIcon className="w-8 h-8 opacity-20" />
-                <p className="text-xs">Redacted image will appear here</p>
-              </div>
+              <PanelState
+                icon={<ImageIcon className="w-8 h-8 opacity-20" />}
+                description="Redacted image will appear here"
+              />
             )}
           </Card>
           {analysis && !error && (
-            <div className="flex flex-wrap items-center gap-2 mt-2 pl-1" aria-live="polite">
+            <StatusMeta trailing={analysis.job_id ? <span title="Job ID">{analysis.job_id}</span> : undefined}>
               {analysis.summary && Object.entries(analysis.summary).map(([key, count]) => (
-                <span key={key} className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700 capitalize">
+                <MetaPill key={key} tone="accent" className="capitalize">
                   {key.replace(/_/g, ' ')}: {count as React.ReactNode}
-                </span>
+                </MetaPill>
               ))}
-              {analysis.job_id && (
-                <span className="ml-auto text-[10px] font-mono text-stone-400 select-all" title="Job ID">
-                  {analysis.job_id}
-                </span>
-              )}
-            </div>
+            </StatusMeta>
           )}
         </div>
       </div>
@@ -590,25 +595,21 @@ export const ImageMode = () => {
         </div>
 
         <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto mt-4 sm:mt-0 gap-6">
-          <label className="flex items-center gap-2 cursor-pointer group">
-            <input
-              type="checkbox"
-              checked={autoProcess}
-              onChange={(e) => setAutoProcess(e.target.checked)}
-              className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-1 transition-all"
-            />
-            <span className="text-xs font-medium text-stone-500 group-hover:text-stone-700 transition-colors">Auto-redact on upload</span>
-          </label>
-          <button
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center gap-1.5 text-xs font-medium text-stone-600 hover:text-stone-900 transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 px-1"
-            aria-expanded={showAdvanced}
-            aria-controls="image-advanced-options"
-          >
-            <Settings2 className="w-4 h-4" aria-hidden="true" />
-            Advanced options
-            {showAdvanced ? <ChevronUp className="w-3 h-3" aria-hidden="true" /> : <ChevronDown className="w-3 h-3" aria-hidden="true" />}
-          </button>
+          <CheckboxField
+            label="Auto-redact on upload"
+            checked={autoProcess}
+            onChange={(e) => setAutoProcess(e.target.checked)}
+            className="gap-2"
+            inputClassName="focus:ring-offset-1 transition-all"
+            labelClassName="text-xs font-medium text-stone-500 group-hover:text-stone-700"
+          />
+          <DisclosureToggle
+            isOpen={showAdvanced}
+            onToggle={() => setShowAdvanced(!showAdvanced)}
+            label="Advanced options"
+            icon={<Settings2 className="w-4 h-4" aria-hidden="true" />}
+            controls="image-advanced-options"
+          />
         </div>
       </div>
 
@@ -616,48 +617,35 @@ export const ImageMode = () => {
       {showAdvanced && (
         <Card id="image-advanced-options" className="p-5 mt-4 bg-stone-50 border-stone-200 transition-all">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Detection</h4>
+            <SettingsSection title="Detection">
               <div className="space-y-3">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={detectText}
-                    onChange={(e) => setDetectText(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
-                  />
-                  <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Detect text regions</span>
-                </label>
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={detectFaces}
-                    onChange={(e) => setDetectFaces(e.target.checked)}
-                    className="w-4 h-4 rounded border-stone-300 text-indigo-600 focus:ring-indigo-500 transition-colors"
-                  />
-                  <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Detect faces</span>
-                </label>
+                <CheckboxField
+                  label="Detect text regions"
+                  checked={detectText}
+                  onChange={(e) => setDetectText(e.target.checked)}
+                />
+                <CheckboxField
+                  label="Detect faces"
+                  checked={detectFaces}
+                  onChange={(e) => setDetectFaces(e.target.checked)}
+                />
               </div>
-            </div>
+            </SettingsSection>
 
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-600">Mode</label>
-                <select
+            <SettingsSection title="Transformation">
+              <FormField label="Mode">
+                <Select
                   value={transformMode}
                   onChange={(e) => setTransformMode(e.target.value)}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow"
                 >
                   <option value="mask">Solid Mask</option>
                   <option value="blur">Blur</option>
                   <option value="pixelate">Pixelate</option>
                   <option value="overlay">Overlay Label</option>
-                </select>
-              </div>
+                </Select>
+              </FormField>
               {transformMode === "blur" && (
-                <div className="space-y-1.5 mt-2">
-                  <label className="text-xs font-medium text-stone-600">Blur Radius: {blurRadius}px</label>
+                <FormField label={`Blur Radius: ${blurRadius}px`} className="mt-2">
                   <input
                     type="range"
                     min="5"
@@ -666,20 +654,18 @@ export const ImageMode = () => {
                     onChange={(e) => setBlurRadius(Number(e.target.value))}
                     className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
-                </div>
+                </FormField>
               )}
-            </div>
+            </SettingsSection>
 
-            <div className="space-y-4">
-              <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Manual Regions</h4>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-stone-600">Regions JSON (Advanced)</label>
-                <textarea
+            <SettingsSection title="Manual Regions">
+              <FormField label="Regions JSON (Advanced)">
+                <Textarea
                   placeholder='[{"x": 10, "y": 10, "w": 100, "h": 50}]'
-                  className="w-full h-24 px-3 py-2 text-xs font-mono rounded-lg border border-stone-200 bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none resize-none transition-shadow"
+                  className="h-24 text-xs font-mono resize-none"
                 />
-              </div>
-            </div>
+              </FormField>
+            </SettingsSection>
           </div>
         </Card>
       )}
