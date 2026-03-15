@@ -78,7 +78,8 @@ export const Header = ({ isDark, onToggleTheme }: HeaderProps) => {
               {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </ThemeToggleButton>
             <a
-              href="#"
+              href="https://docs.obsura.one"
+              target="_blank"
               className="text-stone-500 hover:text-stone-900 transition-colors"
               title="Documentation"
             >
