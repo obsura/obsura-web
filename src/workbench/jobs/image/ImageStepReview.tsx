@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { FindingRecord, JobReviewRequest, ReviewDecision, JobReviewDecisionInput } from "../../../lib/types";
-import { Button, Badge, Card, PanelHeader } from "../../../components/common/UI";
-import { ArrowLeft, Check, X, Wand2, ShieldAlert } from "lucide-react";
+import { Button, Badge, Card } from "../../../components/common/UI";
+import { ArrowLeft, Check, X, Wand2, ShieldAlert, CheckSquare, XSquare } from "lucide-react";
 import { cn } from "../../../lib/utils";
 
 interface ImageStepReviewProps {
@@ -50,6 +50,16 @@ export default function ImageStepReview({
     }));
   };
 
+  const handleBulkDecision = (decision: ReviewDecision) => {
+    setDecisions(prev => {
+      const next = { ...prev };
+      for (const key in next) {
+        next[key] = { ...next[key], decision };
+      }
+      return next;
+    });
+  };
+
   const handleSubmit = () => {
     const payload: JobReviewRequest = {
       decisions: Object.values(decisions)
@@ -58,18 +68,27 @@ export default function ImageStepReview({
   };
 
   return (
-    <div className="flex flex-col h-full p-6 animate-in slide-in-from-right-4 duration-300">
+    <div className="flex flex-col h-[calc(100vh-200px)] min-h-[600px] p-6 animate-in slide-in-from-right-4 duration-300">
       
-      <div className="flex-1 flex flex-col lg:flex-row gap-6">
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden min-h-0">
         
         {/* Left: Original Image Preview with SVG Bounding Boxes */}
-        <div className="flex-1 space-y-4 flex flex-col">
-           <PanelHeader title="Review Context" />
-           <Card className="flex-1 relative bg-stone-900 overflow-hidden flex items-center justify-center p-4">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0">
+           <div className="pb-2 mb-2 border-b border-stone-100 flex items-center justify-between">
+             <h3 className="text-sm font-semibold text-stone-800">Review Context</h3>
+           </div>
+           <Card 
+              className="flex-1 relative overflow-hidden flex items-center justify-center p-4 border border-stone-200 min-h-0"
+              style={{
+                 backgroundColor: "white",
+                 backgroundImage: "radial-gradient(rgb(229, 231, 235) 1px, transparent 0)",
+                 backgroundSize: "20px 20px"
+              }}
+           >
              {imageSize.width > 0 && (
                <div 
                   ref={containerRef}
-                  className="relative pointer-events-none"
+                  className="relative pointer-events-none shadow-sm rounded-md overflow-hidden bg-white/50"
                   style={{
                     maxHeight: "100%",
                     maxWidth: "100%",
@@ -126,9 +145,34 @@ export default function ImageStepReview({
         </div>
 
         {/* Right: Findings List */}
-        <div className="w-full lg:w-[380px] space-y-4 flex flex-col">
-          <PanelHeader title={`${findings.length} findings detected`} />
-          <Card className="flex-1 overflow-auto bg-stone-50/50 p-2 divide-y divide-stone-100 min-h-[300px]">
+        <div className="w-full lg:w-[420px] flex flex-col min-h-0">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100">
+            <h3 className="text-sm font-semibold text-stone-800 flex items-center gap-2">
+              <span className="w-5 h-5 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">
+                {findings.length}
+              </span>
+              Findings
+            </h3>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => handleBulkDecision("approved")}
+                className="text-xs flex items-center gap-1.5 text-stone-500 hover:text-green-700 bg-stone-50 hover:bg-green-50 px-2 py-1.5 rounded-md font-medium transition-colors"
+                title="Approve All"
+              >
+                <CheckSquare className="w-3.5 h-3.5" />
+                <span>Approve All</span>
+              </button>
+              <button 
+                onClick={() => handleBulkDecision("rejected")}
+                className="text-xs flex items-center gap-1.5 text-stone-500 hover:text-red-700 bg-stone-50 hover:bg-red-50 px-2 py-1.5 rounded-md font-medium transition-colors"
+                title="Reject All"
+              >
+                <XSquare className="w-3.5 h-3.5" />
+                <span>Reject All</span>
+              </button>
+            </div>
+          </div>
+          <Card className="flex-1 overflow-auto bg-stone-50/50 p-2 divide-y divide-stone-100 min-h-0">
             {findings.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-48 text-stone-500 text-center">
                 <ShieldAlert className="w-8 h-8 mb-2 text-stone-300" />
@@ -145,48 +189,46 @@ export default function ImageStepReview({
                   <div 
                     key={f.id} 
                     className={cn(
-                      "p-3 space-y-3 transition-opacity border border-transparent rounded-lg", 
-                      isRejected ? "opacity-50" : "",
+                      "p-2.5 transition-opacity border border-transparent rounded-lg flex items-start gap-3", 
+                      isRejected ? "opacity-50 grayscale" : "",
                       hoveredFindingId === f.id ? "bg-white border-stone-200 shadow-sm" : ""
                     )}
                     onMouseEnter={() => setHoveredFindingId(f.id!)}
                     onMouseLeave={() => setHoveredFindingId(null)}
                   >
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1.5">
-                          <span className="text-xs font-mono font-bold text-stone-400 bg-stone-100 rounded px-1.5">#{i+1}</span>
-                          <Badge variant="neutral" className="capitalize text-[10px]">
-                            {f.entity_type}
-                          </Badge>
-                          <span className="text-[10px] text-stone-400">
-                            {Math.round((f.confidence || 0) * 100)}%
-                          </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="text-[10px] font-mono font-bold text-stone-500 bg-stone-100 rounded px-1.5 py-0.5">#{i+1}</span>
+                        <Badge variant="neutral" className="capitalize text-[10px] py-0">
+                          {f.entity_type}
+                        </Badge>
+                        <span className="text-[10px] text-stone-400">
+                          {Math.round((f.confidence || 0) * 100)}%
+                        </span>
+                      </div>
+                      {f.matched_text_preview && (
+                        <div className="text-[11px] font-mono text-stone-600 bg-stone-100/80 px-2 py-1 rounded inline-block truncate max-w-full" title={f.matched_text_preview}>
+                          {f.matched_text_preview}
                         </div>
-                        {f.matched_text_preview && (
-                          <div className="text-xs font-mono text-stone-600 bg-stone-100 px-2 py-1 rounded inline-block truncate max-w-[200px]" title={f.matched_text_preview}>
-                            "{f.matched_text_preview}"
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex rounded-md border border-stone-200 overflow-hidden bg-white shadow-sm shrink-0">
-                        <button
-                          onClick={() => handleDecision(f.id!, "approved")}
-                          className={cn("p-1.5 hover:bg-green-50 transition-colors", dec.decision === "approved" ? "bg-green-100 text-green-700" : "text-stone-400")}
-                          title="Approve Box"
-                        >
-                          <Check className="w-4 h-4" />
-                        </button>
-                        <div className="w-px bg-stone-200" />
-                        <button
-                          onClick={() => handleDecision(f.id!, "rejected")}
-                          className={cn("p-1.5 hover:bg-stone-50 transition-colors", dec.decision === "rejected" ? "bg-red-50 text-red-600" : "text-stone-400")}
-                          title="Reject Box"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex rounded border border-stone-200 overflow-hidden bg-white shadow-sm shrink-0">
+                      <button
+                        onClick={() => handleDecision(f.id!, "approved")}
+                        className={cn("p-1 hover:bg-green-50 transition-colors", dec.decision === "approved" ? "bg-green-50 text-green-600 font-bold" : "text-stone-300")}
+                        title="Approve Box"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="w-px bg-stone-200" />
+                      <button
+                        onClick={() => handleDecision(f.id!, "rejected")}
+                        className={cn("p-1 hover:bg-stone-50 transition-colors", dec.decision === "rejected" ? "bg-red-50 text-red-600 font-bold" : "text-stone-300")}
+                        title="Reject Box"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </div>
                 );
