@@ -3,12 +3,14 @@ import { useSearchParams } from "react-router-dom";
 import { Settings2, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ConfigurationRead, ConfigurationKind } from "../../lib/types";
-import { Card, Button, Badge, PanelState } from "../../components/common/UI";
+import { Card, Button, Badge, PanelState, Input, Select } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import ConfigEditorSheet from "./ConfigEditorSheet";
 import PaginationBar from "../common/PaginationBar";
 
 const PAGE_SIZE = 50;
+type ActiveFilter = "all" | "active" | "inactive";
+type KindFilter = "all" | ConfigurationKind;
 
 function kindLabel(kind: ConfigurationKind) {
   return { pack: "Pack", profile: "Profile", preset: "Preset" }[kind] ?? kind;
@@ -24,14 +26,20 @@ function kindColor(kind: ConfigurationKind) {
 
 export default function ConfigList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = Number(searchParams.get("page") ?? "1");
+  const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+  const queryParam = searchParams.get("q") ?? "";
+  const activeParam = (searchParams.get("active") as ActiveFilter) ?? "all";
+  const kindParam = (searchParams.get("kind") as KindFilter) ?? "all";
   const [configs, setConfigs] = React.useState<ConfigurationRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
-  const [page, setPage] = React.useState(Math.max(1, Number.isFinite(pageParam) ? pageParam : 1));
+  const [page, setPage] = React.useState(pageParam);
   const [totalPages, setTotalPages] = React.useState(1);
+  const [query, setQuery] = React.useState(queryParam);
+  const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>(activeParam);
+  const [kindFilter, setKindFilter] = React.useState<KindFilter>(kindParam);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activeConfigId, setActiveConfigId] = React.useState<string | null>(null);
@@ -71,7 +79,16 @@ export default function ConfigList() {
   React.useEffect(() => {
     const nextPage = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
     if (nextPage !== page) setPage(nextPage);
-  }, [page, searchParams]);
+
+    const nextQuery = searchParams.get("q") ?? "";
+    if (nextQuery !== query) setQuery(nextQuery);
+
+    const nextActive = (searchParams.get("active") as ActiveFilter) ?? "all";
+    if (nextActive !== activeFilter) setActiveFilter(nextActive);
+
+    const nextKind = (searchParams.get("kind") as KindFilter) ?? "all";
+    if (nextKind !== kindFilter) setKindFilter(nextKind);
+  }, [activeFilter, kindFilter, page, query, searchParams]);
 
   React.useEffect(() => {
     if (!openFromQuery) return;
@@ -97,6 +114,53 @@ export default function ConfigList() {
     },
     [searchParams, setSearchParams]
   );
+
+  const updateFiltersInQuery = React.useCallback(
+    (next: { q?: string; active?: ActiveFilter; kind?: KindFilter }) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", "1");
+
+      const nextQ = (next.q ?? query).trim();
+      if (nextQ) params.set("q", nextQ);
+      else params.delete("q");
+
+      const nextActive = next.active ?? activeFilter;
+      if (nextActive === "all") params.delete("active");
+      else params.set("active", nextActive);
+
+      const nextKind = next.kind ?? kindFilter;
+      if (nextKind === "all") params.delete("kind");
+      else params.set("kind", nextKind);
+
+      setSearchParams(params, { replace: true });
+      setPage(1);
+      setQuery(nextQ);
+      setActiveFilter(nextActive);
+      setKindFilter(nextKind);
+    },
+    [activeFilter, kindFilter, query, searchParams, setSearchParams]
+  );
+
+  const visibleConfigs = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return configs.filter((config) => {
+      if (activeFilter === "active" && !config.is_active) return false;
+      if (activeFilter === "inactive" && config.is_active) return false;
+      if (kindFilter !== "all" && config.kind !== kindFilter) return false;
+      if (!q) return true;
+
+      const haystack = [
+        config.name,
+        config.description ?? "",
+        config.category ?? "",
+        ...(config.tags ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [activeFilter, configs, kindFilter, query]);
 
   const openCreate = React.useCallback(() => {
     setEditorMode("create");
@@ -145,6 +209,34 @@ export default function ConfigList() {
         </div>
       </div>
 
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
+        <Input
+          value={query}
+          onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
+          placeholder="Filter this page by name, tag, category"
+        />
+        <Select
+          value={kindFilter}
+          onChange={(e) => updateFiltersInQuery({ kind: e.target.value as KindFilter })}
+        >
+          <option value="all">All kinds</option>
+          <option value="pack">Pack</option>
+          <option value="profile">Profile</option>
+          <option value="preset">Preset</option>
+        </Select>
+        <Select
+          value={activeFilter}
+          onChange={(e) => updateFiltersInQuery({ active: e.target.value as ActiveFilter })}
+        >
+          <option value="all">All states</option>
+          <option value="active">Active only</option>
+          <option value="inactive">Inactive only</option>
+        </Select>
+        <div className="flex items-center text-xs text-stone-500">
+          Showing {visibleConfigs.length} of {configs.length} on this page
+        </div>
+      </div>
+
       {/* Body */}
       {loading && (
         <div className="space-y-2">
@@ -181,10 +273,20 @@ export default function ConfigList() {
         </Card>
       )}
 
-      {!loading && !error && configs.length > 0 && (
+      {!loading && !error && configs.length > 0 && visibleConfigs.length === 0 && (
+        <Card className="p-10">
+          <PanelState
+            icon={<Settings2 className="h-10 w-10 text-stone-300" />}
+            title="No matches on this page"
+            description="Try different filters, or move to another page."
+          />
+        </Card>
+      )}
+
+      {!loading && !error && configs.length > 0 && visibleConfigs.length > 0 && (
         <>
           <div className="space-y-2">
-            {configs.map((config) => (
+            {visibleConfigs.map((config) => (
             <Card
               key={config.id}
               className={cn(

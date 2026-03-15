@@ -3,12 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import { FlaskConical, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { PatternRead } from "../../lib/types";
-import { Card, Button, Badge, PanelState } from "../../components/common/UI";
+import { Card, Button, Badge, PanelState, Input, Select } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import PatternEditorSheet from "./PatternEditorSheet";
 import PaginationBar from "../common/PaginationBar";
 
 const PAGE_SIZE = 50;
+type ActiveFilter = "all" | "active" | "inactive";
 
 function matcherKindLabel(kind: string) {
   const labels: Record<string, string> = {
@@ -34,14 +35,20 @@ function matcherKindColor(kind: string) {
 
 export default function PatternList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = Number(searchParams.get("page") ?? "1");
+
+  const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+  const queryParam = searchParams.get("q") ?? "";
+  const activeParam = (searchParams.get("active") as ActiveFilter) ?? "all";
+
   const [patterns, setPatterns] = React.useState<PatternRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
-  const [page, setPage] = React.useState(Math.max(1, Number.isFinite(pageParam) ? pageParam : 1));
+  const [page, setPage] = React.useState(pageParam);
   const [totalPages, setTotalPages] = React.useState(1);
+  const [query, setQuery] = React.useState(queryParam);
+  const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>(activeParam);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activePatternId, setActivePatternId] = React.useState<string | null>(null);
@@ -81,7 +88,13 @@ export default function PatternList() {
   React.useEffect(() => {
     const nextPage = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
     if (nextPage !== page) setPage(nextPage);
-  }, [page, searchParams]);
+
+    const nextQuery = searchParams.get("q") ?? "";
+    if (nextQuery !== query) setQuery(nextQuery);
+
+    const nextActive = (searchParams.get("active") as ActiveFilter) ?? "all";
+    if (nextActive !== activeFilter) setActiveFilter(nextActive);
+  }, [activeFilter, page, query, searchParams]);
 
   React.useEffect(() => {
     if (!openFromQuery) return;
@@ -107,6 +120,47 @@ export default function PatternList() {
     },
     [searchParams, setSearchParams]
   );
+
+  const updateFiltersInQuery = React.useCallback(
+    (next: { q?: string; active?: ActiveFilter }) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", "1");
+
+      const nextQ = (next.q ?? query).trim();
+      if (nextQ) params.set("q", nextQ);
+      else params.delete("q");
+
+      const nextActive = next.active ?? activeFilter;
+      if (nextActive === "all") params.delete("active");
+      else params.set("active", nextActive);
+
+      setSearchParams(params, { replace: true });
+      setPage(1);
+      setQuery(nextQ);
+      setActiveFilter(nextActive);
+    },
+    [activeFilter, query, searchParams, setSearchParams]
+  );
+
+  const visiblePatterns = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return patterns.filter((pattern) => {
+      if (activeFilter === "active" && !pattern.is_active) return false;
+      if (activeFilter === "inactive" && pattern.is_active) return false;
+      if (!q) return true;
+
+      const haystack = [
+        pattern.name,
+        pattern.description ?? "",
+        pattern.category ?? "",
+        ...(pattern.tags ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [activeFilter, patterns, query]);
 
   const handleCreate = React.useCallback(() => {
     setEditorMode("create");
@@ -161,6 +215,25 @@ export default function PatternList() {
           </div>
         </div>
 
+        <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Input
+            value={query}
+            onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
+            placeholder="Filter this page by name, tag, category"
+          />
+          <Select
+            value={activeFilter}
+            onChange={(e) => updateFiltersInQuery({ active: e.target.value as ActiveFilter })}
+          >
+            <option value="all">All states</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+          </Select>
+          <div className="flex items-center text-xs text-stone-500">
+            Showing {visiblePatterns.length} of {patterns.length} on this page
+          </div>
+        </div>
+
       {/* Body */}
         {loading && (
           <div className="space-y-2">
@@ -197,10 +270,20 @@ export default function PatternList() {
           </Card>
         )}
 
-        {!loading && !error && patterns.length > 0 && (
+        {!loading && !error && patterns.length > 0 && visiblePatterns.length === 0 && (
+          <Card className="p-10">
+            <PanelState
+              icon={<FlaskConical className="h-10 w-10 text-stone-300" />}
+              title="No matches on this page"
+              description="Try a different filter, or move to another page."
+            />
+          </Card>
+        )}
+
+        {!loading && !error && patterns.length > 0 && visiblePatterns.length > 0 && (
           <>
             <div className="space-y-2">
-              {patterns.map((pattern) => (
+              {visiblePatterns.map((pattern) => (
               <Card
                 key={pattern.id}
                 className={cn(

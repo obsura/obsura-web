@@ -3,23 +3,30 @@ import { useSearchParams } from "react-router-dom";
 import { Building2, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { CustomEntityRead } from "../../lib/types";
-import { Card, Button, Badge, PanelState } from "../../components/common/UI";
+import { Card, Button, Badge, PanelState, Input, Select } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import EntityEditorSheet from "./EntityEditorSheet";
 import PaginationBar from "../common/PaginationBar";
 
 const PAGE_SIZE = 50;
+type ActiveFilter = "all" | "active" | "inactive";
 
 export default function EntityList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = Number(searchParams.get("page") ?? "1");
+
+  const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+  const queryParam = searchParams.get("q") ?? "";
+  const activeParam = (searchParams.get("active") as ActiveFilter) ?? "all";
+
   const [entities, setEntities] = React.useState<CustomEntityRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
-  const [page, setPage] = React.useState(Math.max(1, Number.isFinite(pageParam) ? pageParam : 1));
+  const [page, setPage] = React.useState(pageParam);
   const [totalPages, setTotalPages] = React.useState(1);
+  const [query, setQuery] = React.useState(queryParam);
+  const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>(activeParam);
   const [editorOpen, setEditorOpen] = React.useState(false);
   const [editorMode, setEditorMode] = React.useState<"create" | "edit">("create");
   const [activeEntityId, setActiveEntityId] = React.useState<string | null>(null);
@@ -59,7 +66,13 @@ export default function EntityList() {
   React.useEffect(() => {
     const nextPage = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
     if (nextPage !== page) setPage(nextPage);
-  }, [page, searchParams]);
+
+    const nextQuery = searchParams.get("q") ?? "";
+    if (nextQuery !== query) setQuery(nextQuery);
+
+    const nextActive = (searchParams.get("active") as ActiveFilter) ?? "all";
+    if (nextActive !== activeFilter) setActiveFilter(nextActive);
+  }, [activeFilter, page, query, searchParams]);
 
   React.useEffect(() => {
     if (!openFromQuery) return;
@@ -85,6 +98,46 @@ export default function EntityList() {
     },
     [searchParams, setSearchParams]
   );
+
+  const updateFiltersInQuery = React.useCallback(
+    (next: { q?: string; active?: ActiveFilter }) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", "1");
+
+      const nextQ = (next.q ?? query).trim();
+      if (nextQ) params.set("q", nextQ);
+      else params.delete("q");
+
+      const nextActive = next.active ?? activeFilter;
+      if (nextActive === "all") params.delete("active");
+      else params.set("active", nextActive);
+
+      setSearchParams(params, { replace: true });
+      setPage(1);
+      setQuery(nextQ);
+      setActiveFilter(nextActive);
+    },
+    [activeFilter, query, searchParams, setSearchParams]
+  );
+
+  const visibleEntities = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return entities.filter((entity) => {
+      if (activeFilter === "active" && !entity.is_active) return false;
+      if (activeFilter === "inactive" && entity.is_active) return false;
+      if (!q) return true;
+
+      const haystack = [
+        entity.name,
+        entity.description ?? "",
+        ...(entity.tags ?? []),
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(q);
+    });
+  }, [activeFilter, entities, query]);
 
   const openCreate = React.useCallback(() => {
     setEditorMode("create");
@@ -133,6 +186,25 @@ export default function EntityList() {
         </div>
       </div>
 
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <Input
+          value={query}
+          onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
+          placeholder="Filter this page by name, type, tag"
+        />
+        <Select
+          value={activeFilter}
+          onChange={(e) => updateFiltersInQuery({ active: e.target.value as ActiveFilter })}
+        >
+          <option value="all">All states</option>
+          <option value="active">Active only</option>
+          <option value="inactive">Inactive only</option>
+        </Select>
+        <div className="flex items-center text-xs text-stone-500">
+          Showing {visibleEntities.length} of {entities.length} on this page
+        </div>
+      </div>
+
       {/* Body */}
       {loading && (
         <div className="space-y-2">
@@ -169,10 +241,20 @@ export default function EntityList() {
         </Card>
       )}
 
-      {!loading && !error && entities.length > 0 && (
+      {!loading && !error && entities.length > 0 && visibleEntities.length === 0 && (
+        <Card className="p-10">
+          <PanelState
+            icon={<Building2 className="h-10 w-10 text-stone-300" />}
+            title="No matches on this page"
+            description="Try a different filter, or move to another page."
+          />
+        </Card>
+      )}
+
+      {!loading && !error && entities.length > 0 && visibleEntities.length > 0 && (
         <>
           <div className="space-y-2">
-            {entities.map((entity) => (
+            {visibleEntities.map((entity) => (
             <Card
               key={entity.id}
               className={cn(

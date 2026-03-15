@@ -13,13 +13,15 @@ import {
 } from "lucide-react";
 import { api } from "../../lib/api";
 import type { JobRead, JobStatus } from "../../lib/types";
-import { Button, Card, Badge, PanelState } from "../../components/common/UI";
+import { Button, Card, Badge, PanelState, Input, Select } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
 import JobDetailSheet from "./JobDetailSheet.tsx";
 import JobReviewSheet from "./JobReviewSheet.tsx";
 import PaginationBar from "../common/PaginationBar";
 
 const PAGE_SIZE = 50;
+type ContentFilter = "all" | "text" | "image" | "csv" | "document" | "structured";
+type StatusFilter = "all" | JobStatus;
 
 function statusConfig(status: JobStatus) {
   switch (status) {
@@ -46,14 +48,20 @@ function contentTypeLabel(ct: string) {
 
 export default function JobList() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const pageParam = Number(searchParams.get("page") ?? "1");
+  const pageParam = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
+  const queryParam = searchParams.get("q") ?? "";
+  const contentParam = (searchParams.get("content") as ContentFilter) ?? "all";
+  const statusParam = (searchParams.get("status") as StatusFilter) ?? "all";
   const [jobs, setJobs] = React.useState<JobRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [total, setTotal] = React.useState(0);
-  const [page, setPage] = React.useState(Math.max(1, Number.isFinite(pageParam) ? pageParam : 1));
+  const [page, setPage] = React.useState(pageParam);
   const [totalPages, setTotalPages] = React.useState(1);
+  const [query, setQuery] = React.useState(queryParam);
+  const [contentFilter, setContentFilter] = React.useState<ContentFilter>(contentParam);
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>(statusParam);
 
   // Detail sheet state
   const [detailJobId, setDetailJobId] = React.useState<string | null>(null);
@@ -67,7 +75,14 @@ export default function JobList() {
     setError(null);
 
     api
-      .listJobs({ page, page_size: PAGE_SIZE }, signal)
+      .listJobs(
+        {
+          page,
+          page_size: PAGE_SIZE,
+          content_type: contentFilter === "all" ? undefined : contentFilter,
+        },
+        signal
+      )
       .then(({ data, pagination }) => {
         setJobs(data);
         setTotal(pagination.total_items);
@@ -86,14 +101,23 @@ export default function JobList() {
     const controller = new AbortController();
     loadJobs(controller.signal);
     return () => controller.abort();
-  }, [page]);
+  }, [contentFilter, page]);
 
   const viewFromQuery = searchParams.get("view");
 
   React.useEffect(() => {
     const nextPage = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
     if (nextPage !== page) setPage(nextPage);
-  }, [page, searchParams]);
+
+    const nextQuery = searchParams.get("q") ?? "";
+    if (nextQuery !== query) setQuery(nextQuery);
+
+    const nextContent = (searchParams.get("content") as ContentFilter) ?? "all";
+    if (nextContent !== contentFilter) setContentFilter(nextContent);
+
+    const nextStatus = (searchParams.get("status") as StatusFilter) ?? "all";
+    if (nextStatus !== statusFilter) setStatusFilter(nextStatus);
+  }, [contentFilter, page, query, searchParams, statusFilter]);
 
   React.useEffect(() => {
     if (!viewFromQuery) return;
@@ -117,6 +141,43 @@ export default function JobList() {
     },
     [searchParams, setSearchParams]
   );
+
+  const updateFiltersInQuery = React.useCallback(
+    (next: { q?: string; content?: ContentFilter; status?: StatusFilter }) => {
+      const params = new URLSearchParams(searchParams);
+      params.set("page", "1");
+
+      const nextQ = (next.q ?? query).trim();
+      if (nextQ) params.set("q", nextQ);
+      else params.delete("q");
+
+      const nextContent = next.content ?? contentFilter;
+      if (nextContent === "all") params.delete("content");
+      else params.set("content", nextContent);
+
+      const nextStatus = next.status ?? statusFilter;
+      if (nextStatus === "all") params.delete("status");
+      else params.set("status", nextStatus);
+
+      setSearchParams(params, { replace: true });
+      setPage(1);
+      setQuery(nextQ);
+      setContentFilter(nextContent);
+      setStatusFilter(nextStatus);
+    },
+    [contentFilter, query, searchParams, setSearchParams, statusFilter]
+  );
+
+  const visibleJobs = React.useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return jobs.filter((job) => {
+      if (statusFilter !== "all" && job.status !== statusFilter) return false;
+      if (!q) return true;
+
+      const haystack = [job.title ?? "", job.id, job.status, job.content_type].join(" ").toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [jobs, query, statusFilter]);
 
   function handleRefresh() {
     loadJobs(undefined, true);
@@ -165,6 +226,40 @@ export default function JobList() {
         </Button>
       </div>
 
+      <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-4">
+        <Input
+          value={query}
+          onChange={(e) => updateFiltersInQuery({ q: e.target.value })}
+          placeholder="Filter this page by title, id, status"
+        />
+        <Select
+          value={contentFilter}
+          onChange={(e) => updateFiltersInQuery({ content: e.target.value as ContentFilter })}
+        >
+          <option value="all">All content</option>
+          <option value="text">Text</option>
+          <option value="image">Image</option>
+          <option value="csv">CSV</option>
+          <option value="document">Document</option>
+          <option value="structured">Structured</option>
+        </Select>
+        <Select
+          value={statusFilter}
+          onChange={(e) => updateFiltersInQuery({ status: e.target.value as StatusFilter })}
+        >
+          <option value="all">All status</option>
+          <option value="pending">Pending</option>
+          <option value="analyzed">Analyzed</option>
+          <option value="reviewing">Reviewing</option>
+          <option value="reviewed">Reviewed</option>
+          <option value="transformed">Done</option>
+          <option value="failed">Failed</option>
+        </Select>
+        <div className="flex items-center text-xs text-stone-500">
+          Showing {visibleJobs.length} of {jobs.length} on this page
+        </div>
+      </div>
+
       {/* Body */}
       {loading && (
         <div className="space-y-2">
@@ -195,10 +290,20 @@ export default function JobList() {
         </Card>
       )}
 
-      {!loading && !error && jobs.length > 0 && (
+      {!loading && !error && jobs.length > 0 && visibleJobs.length === 0 && (
+        <Card className="p-10">
+          <PanelState
+            icon={<History className="h-10 w-10 text-stone-300" />}
+            title="No matches on this page"
+            description="Try different filters, or move to another page."
+          />
+        </Card>
+      )}
+
+      {!loading && !error && jobs.length > 0 && visibleJobs.length > 0 && (
         <>
           <div className="space-y-2">
-            {jobs.map((job) => {
+            {visibleJobs.map((job) => {
             const { label, icon: StatusIcon, color } = statusConfig(job.status);
             const findingCount = job.findings?.length ?? 0;
             const canReview = job.status === "analyzed" || job.status === "reviewing";
