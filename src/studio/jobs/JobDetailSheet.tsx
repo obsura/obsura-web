@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { env, joinUrl } from "../../lib/env";
 import type { JobRead, JobStatus, FindingRecord, ReviewDecision } from "../../lib/types";
 import { Button, Badge, PanelState } from "../../components/common/UI";
 import { cn } from "../../lib/utils";
@@ -65,6 +66,11 @@ function sourceColor(source: string) {
     case "manual":   return "bg-amber-50 text-amber-700 border-amber-100";
     default:         return "bg-stone-50 text-stone-500 border-stone-200";
   }
+}
+
+function resolveMediaUrl(mediaUrl: string): string {
+  if (/^https?:\/\//i.test(mediaUrl)) return mediaUrl;
+  return joinUrl(env.API_ORIGIN, mediaUrl);
 }
 
 // ── sub-components ───────────────────────────────────────────────────────────
@@ -393,7 +399,7 @@ export default function JobDetailSheet({ jobId, onClose, onReview }: JobDetailSh
                           )}
                           {out.media_url && (
                             <a
-                              href={out.media_url}
+                              href={resolveMediaUrl(out.media_url)}
                               target="_blank"
                               rel="noreferrer"
                               className="mt-1 inline-block text-[11px] text-emerald-600 hover:underline"
