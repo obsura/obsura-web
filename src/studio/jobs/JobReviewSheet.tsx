@@ -217,11 +217,17 @@ export default function JobReviewSheet({ job, onClose, onReviewed }: JobReviewSh
     try {
       const decisions: JobReviewDecisionInput[] = localFindings
         .filter((f) => f.id)
-        .map((f) => ({
-          finding_id: f.id!,
-          decision: f.localDecision,
-          override_value: f.localDecision === "approved" && f.overrideValue.trim() ? f.overrideValue.trim() : null,
-        }));
+        .map((f) => {
+          const entry: JobReviewDecisionInput = {
+            finding_id: f.id!,
+            decision: f.localDecision,
+          };
+          const trimmed = f.overrideValue.trim();
+          if (f.localDecision === "approved" && trimmed) {
+            entry.override_value = trimmed;
+          }
+          return entry;
+        });
 
       const updated = await api.reviewJob(job.id, { decisions });
       onReviewed(updated);
