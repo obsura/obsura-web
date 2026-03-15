@@ -99,8 +99,8 @@ function FindingRow({ finding }: { finding: FindingRecord }) {
         )}
 
         <span className="min-w-0 flex-1 truncate text-sm font-medium text-stone-800">
-          {finding.original_preview
-            ? `"${finding.original_preview.slice(0, 50)}${finding.original_preview.length > 50 ? "…" : ""}"`
+          {finding.matched_text_preview
+            ? `"${finding.matched_text_preview.slice(0, 50)}${finding.matched_text_preview.length > 50 ? "…" : ""}"`
             : finding.entity_type}
         </span>
 
@@ -108,8 +108,8 @@ function FindingRow({ finding }: { finding: FindingRecord }) {
           <Badge className={cn("border text-[10px] font-medium", sourceColor(finding.source))}>
             {finding.source}
           </Badge>
-          <Badge className={cn("border text-[10px] font-medium", decisionBadge(finding.review_decision))}>
-            {decisionLabel(finding.review_decision)}
+          <Badge className={cn("border text-[10px] font-medium", decisionBadge(finding.decision))}>
+            {decisionLabel(finding.decision)}
           </Badge>
         </div>
       </button>
@@ -135,17 +135,17 @@ function FindingRow({ finding }: { finding: FindingRecord }) {
                 </dd>
               </div>
             )}
-            {finding.score != null && (
+            {finding.confidence != null && (
               <div>
-                <dt className="text-stone-400">Score</dt>
-                <dd className="font-medium text-stone-700">{(finding.score * 100).toFixed(0)}%</dd>
+                <dt className="text-stone-400">Confidence</dt>
+                <dd className="font-medium text-stone-700">{(finding.confidence * 100).toFixed(0)}%</dd>
               </div>
             )}
-            {finding.output_value && (
+            {finding.region != null && (
               <div className="col-span-2">
-                <dt className="text-stone-400">Redacted as</dt>
-                <dd className="mt-0.5 rounded bg-white px-2 py-1 font-mono text-[11px] text-stone-700 border border-stone-100">
-                  {finding.output_value}
+                <dt className="text-stone-400">Region</dt>
+                <dd className="font-medium text-stone-700">
+                  {finding.region.x},{finding.region.y} · {finding.region.width}×{finding.region.height}
                 </dd>
               </div>
             )}
@@ -378,18 +378,28 @@ export default function JobDetailSheet({ jobId, onClose, onReview }: JobDetailSh
                         className="flex items-start gap-3 rounded-xl border border-stone-100 bg-stone-50 p-3"
                       >
                         <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg bg-white border border-stone-100">
-                          {out.output_type.includes("image") ? (
+                          {out.content_type === "image" ? (
                             <Image className="h-3.5 w-3.5 text-stone-500" />
                           ) : (
                             <FileText className="h-3.5 w-3.5 text-stone-500" />
                           )}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-stone-700">{out.output_type}</p>
-                          {out.text_preview && (
+                          <p className="text-xs font-medium text-stone-700 capitalize">{out.content_type}</p>
+                          {out.output_text && (
                             <p className="mt-1 text-[11px] leading-relaxed text-stone-500 line-clamp-3">
-                              {out.text_preview}
+                              {out.output_text}
                             </p>
+                          )}
+                          {out.media_url && (
+                            <a
+                              href={out.media_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="mt-1 inline-block text-[11px] text-emerald-600 hover:underline"
+                            >
+                              View output file
+                            </a>
                           )}
                           <p className="mt-1 text-[10px] text-stone-400">
                             {new Date(out.created_at).toLocaleString()}

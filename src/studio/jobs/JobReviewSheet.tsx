@@ -37,8 +37,8 @@ interface LocalFinding extends FindingRecord {
 function initLocalFindings(findings: FindingRecord[]): LocalFinding[] {
   return findings.map((f) => ({
     ...f,
-    localDecision: f.review_decision ?? "pending",
-    overrideValue: f.output_value ?? "",
+    localDecision: f.decision ?? "pending",
+    overrideValue: "",
   }));
 }
 
@@ -72,8 +72,8 @@ function ReviewRow({ finding, onChange }: ReviewRowProps) {
         </button>
 
         <span className="min-w-0 flex-1 truncate text-sm text-stone-800">
-          {finding.original_preview
-            ? `"${finding.original_preview.slice(0, 45)}${finding.original_preview.length > 45 ? "…" : ""}"`
+          {finding.matched_text_preview
+            ? `"${finding.matched_text_preview.slice(0, 45)}${finding.matched_text_preview.length > 45 ? "…" : ""}"`
             : finding.entity_type}
         </span>
 
@@ -139,10 +139,10 @@ function ReviewRow({ finding, onChange }: ReviewRowProps) {
                 <dd className="font-medium text-stone-700">{finding.entity_name}</dd>
               </div>
             )}
-            {finding.score != null && (
+            {finding.confidence != null && (
               <div>
-                <dt className="text-stone-400">Score</dt>
-                <dd className="font-medium text-stone-700">{(finding.score * 100).toFixed(0)}%</dd>
+                <dt className="text-stone-400">Confidence</dt>
+                <dd className="font-medium text-stone-700">{(finding.confidence * 100).toFixed(0)}%</dd>
               </div>
             )}
             {finding.kind === "text" && finding.start_index != null && (
@@ -166,7 +166,7 @@ function ReviewRow({ finding, onChange }: ReviewRowProps) {
                 type="text"
                 value={finding.overrideValue}
                 onChange={(e) => onChange(id, finding.localDecision, e.target.value)}
-                placeholder={finding.output_value ?? ""}
+                placeholder="e.g. [REDACTED]"
                 className="w-full rounded-lg border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-700 placeholder:text-stone-300 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
               />
             </div>

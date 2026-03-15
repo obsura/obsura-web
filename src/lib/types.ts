@@ -242,7 +242,7 @@ export type JobStatus =
   | "transformed"
   | "failed";
 export type ContentType = "text" | "image" | "csv" | "document" | "structured";
-export type FindingSource = "builtin" | "pattern" | "entity" | "manual";
+export type FindingSource = "builtin" | "pattern" | "entity" | "manual" | "ocr";
 export type FindingKind = "text" | "image_region";
 export type ReviewDecision = "pending" | "approved" | "rejected";
 
@@ -255,18 +255,19 @@ export interface FindingRecord {
   entity_name?: string | null;
   start_index?: number | null;
   end_index?: number | null;
-  original_preview?: string | null;
-  output_value?: string | null;
-  score?: number | null;
-  review_decision?: ReviewDecision;
+  region?: { x: number; y: number; width: number; height: number } | null;
+  matched_text_preview?: string | null;
+  confidence?: number | null;
+  decision?: ReviewDecision;
 }
 
 export interface JobOutputRecord {
   id: string;
   created_at: string;
-  output_type: string;
+  content_type: string;
+  output_text?: string | null;
+  output_file_path?: string | null;
   media_url?: string | null;
-  text_preview?: string | null;
 }
 
 export interface JobRead {
