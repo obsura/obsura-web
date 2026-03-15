@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useRef, useCallback } from "react";
-import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge, CheckboxField, DisclosureToggle, FormField, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta, Textarea } from "../common/UI";
+import { Upload, Image as ImageIcon, Download, Trash2, RefreshCw, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
+import { Button, Card, CheckboxField, MetaPill, PanelHeader, PanelState, StatusMeta } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -22,17 +22,10 @@ export const ImageMode = () => {
   const activeFileObj = files[activeIndex];
   const file = activeFileObj?.file || null;
   const previewUrl = activeFileObj?.previewUrl || null;
-  const [showAdvanced, setShowAdvanced] = useLocalStorage("obsura_img_showAdvanced", false);
   const [sliderPos, setSliderPos] = useState(0); // 0 shows the fully redacted image by default
   const [showShareMenu, setShowShareMenu] = useState(false);
   const [autoProcess, setAutoProcess] = useLocalStorage("obsura_img_autoProcess", true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Advanced Options State
-  const [detectText, setDetectText] = useLocalStorage("obsura_img_detectText", true);
-  const [detectFaces, setDetectFaces] = useLocalStorage("obsura_img_detectFaces", false);
-  const [transformMode, setTransformMode] = useLocalStorage<any>("obsura_img_transformMode", "blur");
-  const [blurRadius, setBlurRadius] = useLocalStorage("obsura_img_blurRadius", 5);
 
   const { analysis, output, isLoading, error, analyzeImage, redactImage, reset: resetHook } = useImageRedaction();
 
@@ -99,12 +92,12 @@ export const ImageMode = () => {
 
   const getOrProcessAll = async () => {
     const manifest: ImageTransformManifest = {
-      detect_text: detectText,
-      detect_faces: detectFaces,
+      detect_text: true,
+      detect_faces: false,
       default_transformation: {
-        mode: transformMode,
+        mode: "blur",
         overlay_color: "#000000",
-        blur_radius: Number(blurRadius),
+        blur_radius: 5,
       },
     };
 
@@ -193,27 +186,27 @@ export const ImageMode = () => {
   const handleAnalyze = React.useCallback(() => {
     if (!file) return;
     const manifest: ImageAnalyzeManifest = {
-      detect_text: detectText,
-      detect_faces: detectFaces,
+      detect_text: true,
+      detect_faces: false,
       apply_builtins: true,
     };
     analyzeImage(file, manifest);
-  }, [file, detectText, detectFaces, analyzeImage]);
+  }, [file, analyzeImage]);
 
   const handleRedact = React.useCallback(() => {
     if (!file) return;
     const manifest: ImageTransformManifest = {
-      detect_text: detectText,
-      detect_faces: detectFaces,
+      detect_text: true,
+      detect_faces: false,
       default_transformation: {
-        mode: transformMode,
+        mode: "blur",
         overlay_color: "#111111",
         overlay_label: "REDACTED",
-        blur_radius: Number(blurRadius),
+        blur_radius: 5,
       },
     };
     redactImage(file, manifest);
-  }, [file, detectText, detectFaces, transformMode, blurRadius, redactImage]);
+  }, [file, redactImage]);
 
   // Auto-process effect
   React.useEffect(() => {
@@ -603,72 +596,8 @@ export const ImageMode = () => {
             inputClassName="focus:ring-offset-1 transition-all"
             labelClassName="text-xs font-medium text-stone-500 group-hover:text-stone-700"
           />
-          <DisclosureToggle
-            isOpen={showAdvanced}
-            onToggle={() => setShowAdvanced(!showAdvanced)}
-            label="Advanced options"
-            icon={<Settings2 className="w-4 h-4" aria-hidden="true" />}
-            controls="image-advanced-options"
-          />
         </div>
       </div>
-
-      {/* Advanced Options Panel */}
-      {showAdvanced && (
-        <Card id="image-advanced-options" className="p-5 mt-4 bg-stone-50 border-stone-200 transition-all">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <SettingsSection title="Detection">
-              <div className="space-y-3">
-                <CheckboxField
-                  label="Detect text regions"
-                  checked={detectText}
-                  onChange={(e) => setDetectText(e.target.checked)}
-                />
-                <CheckboxField
-                  label="Detect faces"
-                  checked={detectFaces}
-                  onChange={(e) => setDetectFaces(e.target.checked)}
-                />
-              </div>
-            </SettingsSection>
-
-            <SettingsSection title="Transformation">
-              <FormField label="Mode">
-                <Select
-                  value={transformMode}
-                  onChange={(e) => setTransformMode(e.target.value)}
-                >
-                  <option value="mask">Solid Mask</option>
-                  <option value="blur">Blur</option>
-                  <option value="pixelate">Pixelate</option>
-                  <option value="overlay">Overlay Label</option>
-                </Select>
-              </FormField>
-              {transformMode === "blur" && (
-                <FormField label={`Blur Radius: ${blurRadius}px`} className="mt-2">
-                  <input
-                    type="range"
-                    min="5"
-                    max="50"
-                    value={blurRadius}
-                    onChange={(e) => setBlurRadius(Number(e.target.value))}
-                    className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                  />
-                </FormField>
-              )}
-            </SettingsSection>
-
-            <SettingsSection title="Manual Regions">
-              <FormField label="Regions JSON (Advanced)">
-                <Textarea
-                  placeholder='[{"x": 10, "y": 10, "w": 100, "h": 50}]'
-                  className="h-24 text-xs font-mono resize-none"
-                />
-              </FormField>
-            </SettingsSection>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };

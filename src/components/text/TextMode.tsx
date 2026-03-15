@@ -4,8 +4,8 @@
  */
 
 import React, { useState, useCallback, useEffect } from "react";
-import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, AlertCircle } from "lucide-react";
-import { Button, Card, CheckboxField, DisclosureToggle, FormField, Input, MetaPill, PanelHeader, PanelState, Select, SettingsSection, StatusMeta } from "../common/UI";
+import { Copy, Download, Trash2, ClipboardPaste, RefreshCw, AlertCircle } from "lucide-react";
+import { Button, Card, CheckboxField, MetaPill, PanelHeader, PanelState, StatusMeta } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -13,15 +13,8 @@ import { useLocalStorage } from "../../hooks/use-local-storage";
 
 export const TextMode = () => {
   const [input, setInput] = useState("");
-  const [showAdvanced, setShowAdvanced] = useLocalStorage("obsura_text_showAdvanced", false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [redactOnInput, setRedactOnInput] = useLocalStorage("obsura_text_redactOnInput", true);
-
-  const [applyBuiltins, setApplyBuiltins] = useLocalStorage("obsura_text_applyBuiltins", true);
-  const [persistJob, setPersistJob] = useLocalStorage("obsura_text_persistJob", false);
-  const [transformationMode, setTransformationMode] = useLocalStorage<any>("obsura_text_transformationMode", "semantic");
-  const [exactValues, setExactValues] = useLocalStorage("obsura_text_exactValues", "");
-  const [placeholderLabel, setPlaceholderLabel] = useLocalStorage("obsura_text_placeholderLabel", "SENSITIVE_VALUE");
 
   const { output, isLoading, error, redactText, reset } = useTextRedaction();
 
@@ -30,17 +23,17 @@ export const TextMode = () => {
 
     const payload: TextAnalyzeTransformRequest = {
       content: input,
-      apply_builtins: applyBuiltins,
-      persist_job: persistJob,
-      exact_values: exactValues.split(",").map((value) => value.trim()).filter(Boolean),
+      apply_builtins: false,
+      persist_job: false,
+      exact_values: [],
       default_transformation: {
-        mode: transformationMode,
-        semantic_label: placeholderLabel,
+        mode: "semantic",
+        semantic_label: "SENSITIVE_VALUE",
       },
     };
 
     redactText(payload);
-  }, [input, applyBuiltins, persistJob, exactValues, transformationMode, placeholderLabel, redactText]);
+  }, [input, redactText]);
 
   useEffect(() => {
     if (redactOnInput && input.trim()) {
@@ -214,63 +207,8 @@ export const TextMode = () => {
             inputClassName="focus:ring-offset-1 transition-all"
             labelClassName="text-xs font-medium text-stone-500 group-hover:text-stone-700"
           />
-          <DisclosureToggle
-            isOpen={showAdvanced}
-            onToggle={() => setShowAdvanced(!showAdvanced)}
-            label="Advanced options"
-            icon={<Settings2 className="h-4 w-4" aria-hidden="true" />}
-            controls="advanced-options-panel"
-          />
         </div>
       </div>
-
-      {showAdvanced && (
-        <Card id="advanced-options-panel" className="mt-4 border-stone-200 bg-stone-50 p-5 transition-all">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            <SettingsSection title="Detection">
-              <CheckboxField
-                label="Use built-in detectors"
-                checked={applyBuiltins}
-                onChange={(event) => setApplyBuiltins(event.target.checked)}
-              />
-              <FormField label="Exact values to redact" className="mt-2">
-                <Input
-                  placeholder="Comma separated..."
-                  value={exactValues}
-                  onChange={(event) => setExactValues(event.target.value)}
-                />
-              </FormField>
-            </SettingsSection>
-
-            <SettingsSection title="Transformation">
-              <FormField label="Mode">
-                <Select value={transformationMode} onChange={(event) => setTransformationMode(event.target.value)}>
-                  <option value="semantic">Semantic Label</option>
-                  <option value="mask">Full Mask</option>
-                  <option value="partial_mask">Partial Mask</option>
-                  <option value="stable_alias">Stable Alias</option>
-                </Select>
-              </FormField>
-              <FormField label="Placeholder Label" className="mt-2">
-                <Input value={placeholderLabel} onChange={(event) => setPlaceholderLabel(event.target.value)} />
-              </FormField>
-            </SettingsSection>
-
-            <SettingsSection title="Persistence">
-              <CheckboxField
-                label="Persist job metadata"
-                checked={persistJob}
-                onChange={(event) => setPersistJob(event.target.checked)}
-              />
-              <CheckboxField
-                label="Persist source content"
-                disabled
-                labelClassName="line-through decoration-stone-300"
-              />
-            </SettingsSection>
-          </div>
-        </Card>
-      )}
     </div>
   );
 };
