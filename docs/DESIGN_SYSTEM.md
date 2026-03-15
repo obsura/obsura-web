@@ -69,8 +69,6 @@ Defined in src/components/common/UI.tsx:
   - base dropdown style with focus ring
 - Checkbox
   - shared checkbox primitive for option controls
-- FormField
-  - composes label + control (+ optional hint) for consistent field layout
 
 ## Theme System
 

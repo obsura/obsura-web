@@ -154,3 +154,19 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(({ cla
     {...props}
   />
 ));
+
+interface FormFieldProps {
+  label: React.ReactNode;
+  hint?: React.ReactNode;
+  className?: string;
+  labelClassName?: string;
+  children: React.ReactNode;
+}
+
+export const FormField = ({ label, hint, className, labelClassName, children }: FormFieldProps) => (
+  <div className={cn("space-y-1.5", className)}>
+    <FieldLabel className={labelClassName}>{label}</FieldLabel>
+    {children}
+    {hint ? <p className="text-[11px] text-stone-500">{hint}</p> : null}
+  </div>
+);

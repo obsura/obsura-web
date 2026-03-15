@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge, Checkbox, FieldLabel, Select, Textarea } from "../common/UI";
+import { Button, Card, Badge, Checkbox, FormField, Select, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -637,8 +637,7 @@ export const ImageMode = () => {
 
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
-              <div className="space-y-1.5">
-                <FieldLabel>Mode</FieldLabel>
+              <FormField label="Mode">
                 <Select
                   value={transformMode}
                   onChange={(e) => setTransformMode(e.target.value)}
@@ -648,10 +647,9 @@ export const ImageMode = () => {
                   <option value="pixelate">Pixelate</option>
                   <option value="overlay">Overlay Label</option>
                 </Select>
-              </div>
+              </FormField>
               {transformMode === "blur" && (
-                <div className="space-y-1.5 mt-2">
-                  <FieldLabel>Blur Radius: {blurRadius}px</FieldLabel>
+                <FormField label={`Blur Radius: ${blurRadius}px`} className="mt-2">
                   <input
                     type="range"
                     min="5"
@@ -660,19 +658,18 @@ export const ImageMode = () => {
                     onChange={(e) => setBlurRadius(Number(e.target.value))}
                     className="w-full h-1.5 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
                   />
-                </div>
+                </FormField>
               )}
             </div>
 
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Manual Regions</h4>
-              <div className="space-y-1.5">
-                <FieldLabel>Regions JSON (Advanced)</FieldLabel>
+              <FormField label="Regions JSON (Advanced)">
                 <Textarea
                   placeholder='[{"x": 10, "y": 10, "w": 100, "h": 50}]'
                   className="h-24 text-xs font-mono resize-none"
                 />
-              </div>
+              </FormField>
             </div>
           </div>
         </Card>

@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button, Card, Checkbox, FieldLabel, Input, Select } from "../common/UI";
+import { Button, Card, Checkbox, FormField, Input, Select } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -239,20 +239,18 @@ export const TextMode = () => {
                 />
                 <span className="text-sm text-stone-700 group-hover:text-stone-900 transition-colors">Use built-in detectors</span>
               </label>
-              <div className="space-y-1.5 mt-2">
-                <FieldLabel>Exact values to redact</FieldLabel>
+              <FormField label="Exact values to redact" className="mt-2">
                 <Input
                   placeholder="Comma separated..."
                   value={exactValues}
                   onChange={(e) => setExactValues(e.target.value)}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="space-y-4">
               <h4 className="text-[10px] font-bold uppercase tracking-widest text-stone-400">Transformation</h4>
-              <div className="space-y-1.5">
-                <FieldLabel>Mode</FieldLabel>
+              <FormField label="Mode">
                 <Select
                   value={transformationMode}
                   onChange={(e) => setTransformationMode(e.target.value)}
@@ -262,14 +260,13 @@ export const TextMode = () => {
                   <option value="partial_mask">Partial Mask</option>
                   <option value="stable_alias">Stable Alias</option>
                 </Select>
-              </div>
-              <div className="space-y-1.5 mt-2">
-                <FieldLabel>Placeholder Label</FieldLabel>
+              </FormField>
+              <FormField label="Placeholder Label" className="mt-2">
                 <Input
                   value={placeholderLabel}
                   onChange={(e) => setPlaceholderLabel(e.target.value)}
                 />
-              </div>
+              </FormField>
             </div>
 
             <div className="space-y-4">
