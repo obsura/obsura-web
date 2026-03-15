@@ -15,8 +15,8 @@ interface ImageStepResultProps {
 export default function ImageStepResult({ job, onReset, previewUrl }: ImageStepResultProps) {
   const [downloading, setDownloading] = useState(false);
 
-  // Fallbacks if outputs missing
-  const outputRecord = job?.outputs?.find(o => o.content_type === "image" && o.media_url);
+  // Fallbacks if outputs missing (API might return "image/png" or "image")
+  const outputRecord = job?.outputs?.find(o => o.content_type?.startsWith("image") && o.media_url);
   const transformedSrc = outputRecord?.media_url ? joinUrl(env.API_ORIGIN, outputRecord.media_url) : null;
   const outputSrc = transformedSrc || previewUrl;
   const isTransformed = !!transformedSrc;
