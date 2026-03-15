@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Shield, Github, BookOpen, Activity, CheckCircle2, Info, RefreshCw, XCircle, Moon, Sun } from "lucide-react";
+import { Github, BookOpen, Activity, CheckCircle2, Info, RefreshCw, XCircle, Moon, Sun, Layers } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge, ThemeToggleButton } from "../common/UI";
 import { useApiStatus } from "../../hooks/use-api-status";
 
@@ -65,6 +66,16 @@ export const Header = ({ isDark, onToggleTheme }: HeaderProps) => {
               </>
             )}
           </div>
+
+          <div className="h-4 w-px bg-stone-200 hidden md:block" />
+
+          <Link
+            to="/studio"
+            className="hidden md:flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-stone-600 transition-colors hover:bg-stone-100 hover:text-stone-900 border border-stone-200"
+          >
+            <Layers className="h-3.5 w-3.5" />
+            Studio
+          </Link>
 
           <div className="h-4 w-px bg-stone-200 hidden md:block" />
 
