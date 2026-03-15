@@ -5,7 +5,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { Upload, Image as ImageIcon, Download, Trash2, Settings2, RefreshCw, ChevronDown, ChevronUp, Eye, EyeOff, AlertCircle, Monitor, Share2, ChevronLeft, ChevronRight, MessageCircle, Mail, MessageSquare } from "lucide-react";
-import { Button, Card, Badge, Checkbox, FormField, PanelHeader, Select, Textarea } from "../common/UI";
+import { Button, Card, Badge, Checkbox, FormField, MetaPill, PanelHeader, Select, StatusMeta, Textarea } from "../common/UI";
 import { ImageAnalyzeManifest, ImageTransformManifest } from "../../lib/types";
 import { downloadImageFile } from "../../lib/utils";
 import { env } from "../../lib/env";
@@ -552,18 +552,13 @@ export const ImageMode = () => {
             )}
           </Card>
           {analysis && !error && (
-            <div className="flex flex-wrap items-center gap-2 mt-2 pl-1" aria-live="polite">
+            <StatusMeta trailing={analysis.job_id ? <span title="Job ID">{analysis.job_id}</span> : undefined}>
               {analysis.summary && Object.entries(analysis.summary).map(([key, count]) => (
-                <span key={key} className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700 capitalize">
+                <MetaPill key={key} tone="accent" className="capitalize">
                   {key.replace(/_/g, ' ')}: {count as React.ReactNode}
-                </span>
+                </MetaPill>
               ))}
-              {analysis.job_id && (
-                <span className="ml-auto text-[10px] font-mono text-stone-400 select-all" title="Job ID">
-                  {analysis.job_id}
-                </span>
-              )}
-            </div>
+            </StatusMeta>
           )}
         </div>
       </div>

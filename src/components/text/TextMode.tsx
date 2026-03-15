@@ -5,7 +5,7 @@
 
 import React, { useState, useCallback, useEffect } from "react";
 import { Copy, Download, Trash2, ClipboardPaste, Settings2, RefreshCw, ChevronDown, ChevronUp, AlertCircle } from "lucide-react";
-import { Button, Card, Checkbox, FormField, Input, PanelHeader, Select } from "../common/UI";
+import { Button, Card, Checkbox, FormField, Input, MetaPill, PanelHeader, Select, StatusMeta } from "../common/UI";
 import { TextAnalyzeTransformRequest } from "../../lib/types";
 import { downloadTextFile } from "../../lib/utils";
 import { useTextRedaction } from "../../hooks/use-text-redaction";
@@ -173,22 +173,17 @@ export const TextMode = () => {
             </div>
           </Card>
           {output && !error && (
-            <div className="flex flex-wrap items-center gap-2 mt-2 pl-1" aria-live="polite">
+            <StatusMeta trailing={output.job_id ? <span title="Job ID">{output.job_id}</span> : undefined}>
               {output.summary?.replacement_count !== undefined ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-indigo-50 text-indigo-700">
+                <MetaPill tone="accent">
                   {output.summary.replacement_count} replacement{output.summary.replacement_count !== 1 && 's'}
-                </span>
+                </MetaPill>
               ) : output.replacements?.length > 0 ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-stone-100 text-stone-700">
+                <MetaPill>
                   {output.replacements.length} replacement{output.replacements.length !== 1 && 's'}
-                </span>
+                </MetaPill>
               ) : null}
-              {output.job_id && (
-                <span className="ml-auto text-[10px] font-mono text-stone-400 select-all" title="Job ID">
-                  {output.job_id}
-                </span>
-              )}
-            </div>
+            </StatusMeta>
           )}
         </div>
       </div>

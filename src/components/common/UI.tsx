@@ -226,3 +226,35 @@ export const PanelHeader = ({ title, titleId, actions, className, titleClassName
     {actions ? <div className="flex items-center gap-2">{actions}</div> : null}
   </div>
 );
+
+type MetaPillProps = React.HTMLAttributes<HTMLSpanElement> & {
+  tone?: "neutral" | "accent";
+};
+
+export const MetaPill = ({ children, tone = "neutral", className, ...props }: MetaPillProps) => (
+  <span
+    {...props}
+    className={cn(
+      "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium",
+      tone === "accent" ? "bg-indigo-50 text-indigo-700" : "bg-stone-100 text-stone-700",
+      className
+    )}
+  >
+    {children}
+  </span>
+);
+
+export const StatusMeta = ({
+  children,
+  trailing,
+  className,
+}: {
+  children?: React.ReactNode;
+  trailing?: React.ReactNode;
+  className?: string;
+}) => (
+  <div className={cn("flex flex-wrap items-center gap-2 mt-2 pl-1", className)} aria-live="polite">
+    {children}
+    {trailing ? <div className="ml-auto text-[10px] font-mono text-stone-400 select-all">{trailing}</div> : null}
+  </div>
+);
