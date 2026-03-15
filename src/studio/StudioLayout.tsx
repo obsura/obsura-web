@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { FlaskConical, Layers, Settings2, History, ChevronLeft, LayoutDashboard, Building2, Sun, Moon } from "lucide-react";
+import { FlaskConical, Layers, Settings2, History, ChevronLeft, LayoutDashboard, Building2, Search, Sun, Moon } from "lucide-react";
 import { ThemeToggleButton } from "../components/common/UI";
 import { cn } from "../lib/utils";
 import StudioHome from "./StudioHome.tsx";
@@ -8,6 +8,7 @@ import PatternList from "./patterns/PatternList.tsx";
 import EntityList from "./entities/EntityList.tsx";
 import ConfigList from "./configurations/ConfigList.tsx";
 import JobList from "./jobs/JobList.tsx";
+import StudioSearch from "./search/StudioSearch.tsx";
 
 interface StudioLayoutProps {
   isDark: boolean;
@@ -23,6 +24,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: "/studio", label: "Overview", icon: LayoutDashboard, end: true },
+  { to: "/studio/search", label: "Search", icon: Search },
   { to: "/studio/patterns", label: "Patterns", icon: FlaskConical },
   { to: "/studio/entities", label: "Entities", icon: Building2 },
   { to: "/studio/configurations", label: "Configurations", icon: Settings2 },
@@ -93,6 +95,7 @@ export default function StudioLayout({ isDark, onToggleTheme }: StudioLayoutProp
       <div className="flex flex-1 flex-col overflow-hidden">
         <Routes>
           <Route index element={<StudioHome />} />
+          <Route path="search/*" element={<StudioSearch />} />
           <Route path="patterns/*" element={<PatternList />} />
           <Route path="entities/*" element={<EntityList />} />
           <Route path="configurations/*" element={<ConfigList />} />

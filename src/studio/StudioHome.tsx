@@ -1,5 +1,5 @@
 import React from "react";
-import { FlaskConical, Building2, Settings2, History, ArrowRight } from "lucide-react";
+import { FlaskConical, Building2, Settings2, History, ArrowRight, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 import { Card } from "../components/common/UI";
@@ -78,6 +78,15 @@ export default function StudioHome() {
   }, []);
 
   const tiles: StatCard[] = [
+    {
+      label: "Search",
+      description: "Find records across Studio resources from one place",
+      icon: <Search className="h-5 w-5 text-indigo-600" />,
+      count: null,
+      loading: false,
+      href: "/studio/search",
+      color: "bg-indigo-50",
+    },
     {
       label: "Patterns",
       description: "Regex, exact match and list matchers with redaction transformations",
