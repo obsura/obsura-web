@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import { Settings2, Plus, AlertCircle, PencilLine, RefreshCw } from "lucide-react";
 import { api } from "../../lib/api";
 import type { ConfigurationRead, ConfigurationKind } from "../../lib/types";
@@ -19,6 +20,7 @@ function kindColor(kind: ConfigurationKind) {
 }
 
 export default function ConfigList() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [configs, setConfigs] = React.useState<ConfigurationRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -57,6 +59,22 @@ export default function ConfigList() {
     return () => controller.abort();
   }, [loadConfigs]);
 
+  const openFromQuery = searchParams.get("open");
+
+  React.useEffect(() => {
+    if (!openFromQuery) return;
+    setEditorMode("edit");
+    setActiveConfigId(openFromQuery);
+    setEditorOpen(true);
+  }, [openFromQuery]);
+
+  const clearOpenQuery = React.useCallback(() => {
+    if (!openFromQuery) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("open");
+    setSearchParams(next, { replace: true });
+  }, [openFromQuery, searchParams, setSearchParams]);
+
   const openCreate = React.useCallback(() => {
     setEditorMode("create");
     setActiveConfigId(null);
@@ -72,8 +90,9 @@ export default function ConfigList() {
   const onSaved = React.useCallback(async () => {
     setEditorOpen(false);
     setActiveConfigId(null);
+    clearOpenQuery();
     await loadConfigs(undefined, true);
-  }, [loadConfigs]);
+  }, [clearOpenQuery, loadConfigs]);
 
   return (
     <div className="flex-1 overflow-y-auto p-8">
@@ -202,6 +221,7 @@ export default function ConfigList() {
         onClose={() => {
           setEditorOpen(false);
           setActiveConfigId(null);
+          clearOpenQuery();
         }}
         onSaved={onSaved}
       />

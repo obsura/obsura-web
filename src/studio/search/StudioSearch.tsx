@@ -12,7 +12,7 @@ interface ParsedResult {
   kind: string;
   title: string;
   subtitle: string;
-  route: string | null;
+  href: string | null;
   raw: SearchRecord;
 }
 
@@ -38,11 +38,13 @@ function guessKind(raw: SearchRecord): string {
   return "record";
 }
 
-function resolveRoute(kind: string): string | null {
-  if (kind.includes("pattern")) return "/studio/patterns";
-  if (kind.includes("entit")) return "/studio/entities";
-  if (kind.includes("config") || kind.includes("preset") || kind.includes("profile") || kind.includes("pack")) return "/studio/configurations";
-  if (kind.includes("job")) return "/studio/jobs";
+function buildHref(kind: string, id: string): string | null {
+  if (kind.includes("pattern")) return `/studio/patterns?open=${encodeURIComponent(id)}`;
+  if (kind.includes("entit")) return `/studio/entities?open=${encodeURIComponent(id)}`;
+  if (kind.includes("config") || kind.includes("preset") || kind.includes("profile") || kind.includes("pack")) {
+    return `/studio/configurations?open=${encodeURIComponent(id)}`;
+  }
+  if (kind.includes("job")) return `/studio/jobs?view=${encodeURIComponent(id)}`;
   return null;
 }
 
@@ -65,9 +67,9 @@ function parseResult(raw: SearchRecord, i: number): ParsedResult {
   ].filter(Boolean) as string[];
 
   const subtitle = subtitleParts.length > 0 ? subtitleParts.join(" • ") : "No extra details";
-  const route = resolveRoute(kind);
+  const href = buildHref(kind, id);
 
-  return { id, kind, title, subtitle, route, raw };
+  return { id, kind, title, subtitle, href, raw };
 }
 
 export default function StudioSearch() {
@@ -192,8 +194,8 @@ export default function StudioSearch() {
                     <p className="mt-1 truncate text-[11px] text-stone-400">{result.id}</p>
                   </div>
 
-                  {result.route ? (
-                    <Link to={result.route} className="flex-shrink-0">
+                  {result.href ? (
+                    <Link to={result.href} className="flex-shrink-0">
                       <Button variant="ghost" size="sm">
                         Open section
                         <ArrowRight className="ml-1.5 h-3.5 w-3.5" />

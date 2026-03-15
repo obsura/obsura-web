@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   History,
   AlertCircle,
@@ -41,6 +42,7 @@ function contentTypeLabel(ct: string) {
 }
 
 export default function JobList() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = React.useState<JobRead[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -79,6 +81,20 @@ export default function JobList() {
     return () => controller.abort();
   }, []);
 
+  const viewFromQuery = searchParams.get("view");
+
+  React.useEffect(() => {
+    if (!viewFromQuery) return;
+    setDetailJobId(viewFromQuery);
+  }, [viewFromQuery]);
+
+  const clearViewQuery = React.useCallback(() => {
+    if (!viewFromQuery) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete("view");
+    setSearchParams(next, { replace: true });
+  }, [viewFromQuery, searchParams, setSearchParams]);
+
   function handleRefresh() {
     loadJobs(undefined, true);
   }
@@ -89,10 +105,12 @@ export default function JobList() {
 
   function handleDetailClose() {
     setDetailJobId(null);
+    clearViewQuery();
   }
 
   function handleOpenReview(job: JobRead) {
     setDetailJobId(null);
+    clearViewQuery();
     setReviewJob(job);
   }
 
