@@ -107,8 +107,8 @@ export default function ConfigEditorSheet({ open, mode, configId, onClose, onSav
     async function loadData() {
       try {
         const [patternsRes, entitiesRes] = await Promise.all([
-          api.listPatterns({ page: 1, page_size: 200 }, controller.signal),
-          api.listEntities({ page: 1, page_size: 200 }, controller.signal),
+          api.listPatterns({ page: 1, page_size: 100 }, controller.signal),
+          api.listEntities({ page: 1, page_size: 100 }, controller.signal),
         ]);
 
         setPatterns(patternsRes.data);
