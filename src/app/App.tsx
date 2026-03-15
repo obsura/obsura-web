@@ -4,9 +4,9 @@
  */
 
 import { Header } from "../components/layout/Header";
+import { AppFooter } from "../components/layout/AppFooter";
 import { TextMode } from "../components/text/TextMode";
 import { ImageMode } from "../components/image/ImageMode";
-import { DeveloperProfile } from "../components/layout/DeveloperProfile";
 import { SegmentedControl } from "../components/common/UI";
 import { RedactionMode } from "../lib/types";
 import { Type, Image as ImageIcon, ShieldCheck } from "lucide-react";
@@ -70,19 +70,7 @@ export default function App() {
             </AnimatePresence>
           </div>
 
-          {/* Footer Info */}
-          <footer className="pt-6 pb-2">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-              <p className="text-[11px] text-stone-400">
-                &copy; 2026 Obsura Project. Created with &hearts; by <DeveloperProfile />.
-              </p>
-              <div className="flex items-center gap-6">
-                <a href="/privacy-policy.html" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 focus-visible:text-stone-900 transition-colors underline-offset-4 hover:underline focus-visible:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" rel="noopener noreferrer">Privacy Policy</a>
-                <a href="/security-audit.html" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 focus-visible:text-stone-900 transition-colors underline-offset-4 hover:underline focus-visible:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" rel="noopener noreferrer">Security Audit</a>
-                <a href="/terms-of-service.html" className="text-[11px] font-medium text-stone-500 hover:text-stone-900 focus-visible:text-stone-900 transition-colors underline-offset-4 hover:underline focus-visible:underline rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2" rel="noopener noreferrer">Terms of Service</a>
-              </div>
-            </div>
-          </footer>
+          <AppFooter />
         </div>
       </main>
     </div>
